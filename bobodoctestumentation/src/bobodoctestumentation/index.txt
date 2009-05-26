@@ -668,7 +668,7 @@ file to a module.
 The bobo command-line server is convenient for getting
 started, but production applications will usually be configured with
 selected servers and middleware using `Paste Deployment
-<http://pythonpaste.org/deploy/>`. Bobo includes a Paste Deployment
+<http://pythonpaste.org/deploy/>`_. Bobo includes a Paste Deployment
 application implementation.  To use bobo with Paste Deployment, simply
 define an application section using the bobo egg::
 
