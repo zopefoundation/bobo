@@ -1,0 +1,772 @@
+Additional topics
+=================
+
+Check functions
+---------------
+
+When using the ``query``, ``post``, and ``resource`` decorators, you
+can define a check function.  Before calling the decorated function,
+the check function is called.  If the check function returns a
+response, the check function's response is used rather than calling
+the decorated function.  A common use of check functions is for
+authorization::
+
+   import bobo, webob
+
+   data = {'x': 'some text'}
+
+   def authenticated(inst, request, func):
+       if not request.remote_user:
+           return webob.Response(status=401)
+
+   @bobo.post('/:name', check=authenticated)
+   def update(name, body):
+       data[name] = body
+       return 'Updated'
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> import bobo, webtest
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> _ = app.post('/foo', 'body=sometext', status=401)
+    >>> import helloapp
+    >>> helloapp.data
+    {'x': 'some text'}
+
+    >>> app.post('/foo', 'body=sometext',status=200,
+    ...     extra_environ=dict(REMOTE_USER='jim')).body
+    'Updated'
+
+    >>> import pprint
+    >>> pprint.pprint(helloapp.data, width=1)
+    {'foo': u'sometext',
+     'x': 'some text'}
+
+In this example, we use a very simple authorization model.  We can
+update data if the user is authenticated.  Check functions take 3
+positional arguments:
+
+- an instance
+- a request
+- the decorated function (or callable)
+
+If a resource is a method, the first argument passed to the check
+function will be the instance the method is applied to. Otherwise, it
+will be None.
+
+Decorated objects can be used directly
+--------------------------------------
+
+Functions or callables decorated by the ``query``, ``post``,
+``resource`` and ``subroute`` decorators can be called as if they were
+undecorated. For example, with::
+
+    @bobo.query('/:name', check=authenticated)
+    def get(name):
+        return data[name]
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> get = helloapp.get
+
+We can call the get function directly:
+
+    >>> get('x')
+    'some text'
+
+Similarly, classes decorated with the subroute decorator can be used
+normally. The subroute decorator simply adds a ``bobo_response`` class
+method that allows the class to be used as a :term:`resource`.
+
+.. _configuredroutes:
+
+Configured routes
+-----------------
+
+For simplicity, you normally specify routes in your application code.
+For example, in::
+
+    @bobo.query('/greeters/:myname')
+    def hello(name="world", myname='Bobo'):
+        return "Hello %s! My name is %s." % (name, myname)
+
+You specify 2 things:
+
+1. Which URLs should be handled by the hello function.
+
+2. How to call the function.
+
+In most cases, being able to specify this information one place is
+convenient.
+
+Sometimes, however, you may want to separate routes from your
+implementation to:
+
+- Manage the routes in one place,
+
+- Omit some routes defined in the implementation,
+
+- Change the routes or search order from what's given in the
+  implementation.
+
+Bobo provides a way to explicitly configure the routes as part of
+configuration. When you specify resources, you can control the order
+resources are searched and override the routes used.
+
+The ``bobo_response`` takes a number of resources separated by
+newlines. Resources take one of 4 forms:
+
+modulename
+    Use all of the resources found in the module.
+
+modulename:expression
+    Use the given :term:resource.  The resource is specified using a
+    module name and an expression (typically just a global name)
+    that's executed in the module's global scope.
+
+route -> modulename:expression
+    Use the given object with the given route. The object is specified
+    using a module name and an expression (typically just a global
+    name) that's executed in the module's global scope.
+
+    The object must have a ``bobo_route`` method, as objects created
+    using one of the ``query``, ``post``, ``resource`` or ``subroute``
+    decorators do, or the object must be a class with a constructor
+    that takes a request and route data and returns a resource.
+
+route +> modulename:expression
+    Use a :term:`resource`, but add the given route as a prefix of the
+    resources route. The resource is given by a module name and
+    expression.
+
+    The given route may not have placeholders.
+
+Resources are separated by newlines.  The string ``->``, or ``+>`` at
+the end of a line acts as a line continuation character.
+
+To show how this works, we'll look at an example.  We'll create a
+2 modules with some resources in them. First, people::
+
+    import bobo
+
+    @bobo.subroute('/employee/:id', scan=True)
+    class Employee:
+        def __init__(self, request, id):
+            self.id = id
+
+        @bobo.query('/')
+        def hi(self):
+            return "Hi, I'm employee %s" % self.id
+
+    @bobo.query('/:name')
+    def hi(name):
+        return "Hi, I'm %s" % name
+
+.. -> src
+
+    >>> import sys
+    >>> if sys.version_info < (2, 6):
+    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
+    ...     src += ("\nEmployee = bobo.subroute("
+    ...             "'/employee/:id', scan=True)(Employee)")
+
+    >>> update_module('people', src)
+
+Then docs::
+
+    import bobo
+
+    documents = {
+        'bobs': {
+        'hi.html': "Hi. I'm Bob.",
+        'hobbies': {
+          'cooking.html': "I like to cook.",
+          'sports.html': "I like to ski.",
+          },
+        },
+    }
+
+    @bobo.subroute('/docs', scan=True)
+    class Folder:
+
+        def __init__(self, request, data=None):
+            if data is None:
+                data = documents
+            self.data = data
+
+        @bobo.query('')
+        def base(self, bobo_request):
+            return bobo.redirect(request.url+'/')
+
+        @bobo.query('/')
+        def index(self):
+            return '\n'.join('<a href="%s/">%s<a><br>' % (k, k)
+                             for k in self.data)
+
+        @bobo.subroute('/:item_id')
+        def subitem(self, request, item_id):
+            item = self.data[item_id]
+            if isinstance(item, dict):
+               return Folder(request, item)
+            else:
+               return Document(item)
+
+    @bobo.scan_class
+    class Document:
+
+        def __init__(self, text):
+            self.text = text
+
+        @bobo.query('')
+        def get(self):
+            return self.text
+
+.. -> src
+
+    >>> import sys
+    >>> if sys.version_info < (2, 6):
+    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
+    ...     src += "\nFolder = bobo.subroute('/docs', scan=True)(Folder)"
+    ...     src = src.replace("\n@bobo.scan_class", "")
+    ...     src += "\nbobo.scan_class(Document)"
+
+
+
+    >>> update_module('docs', src)
+
+We use the ``bobo_resources`` option to control the URLs we access these
+with::
+
+    [app:main]
+    use = egg:bobo
+    bobo_resources =
+        # Same routes
+        people:Employee # 1
+        docs            # 2
+
+        # new routes
+        /long/winded/path/:name/lets/get/on/with/it -> # 3
+           people:hi                                   # 3 also
+        /us/:id -> people:Employee  # 4
+
+        # prefixes
+        /folks +> people # 5
+        /ho +> people:hi # 6
+
+.. -> ini
+
+    >>> import ConfigParser, StringIO
+    >>> parser = ConfigParser.ConfigParser()
+    >>> parser.readfp(StringIO.StringIO(ini))
+    >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
+
+This example shows a number of things:
+
+- We can use blank lines and comments.  Route configurations can get
+  involved, so comments are useful. In the example, comments are used
+  to assign numbers to the individual routes so we can refer to them.
+
+- We have several form of resource:
+
+  1. Use an existing resource with its original route.
+
+     If we use a URL like::
+
+       http://localhost:8080/employee/1/
+
+     .. -> url1 strip
+
+     We'll get output::
+
+       Hi, I'm employee 1
+
+     .. -> expected1 strip
+
+         >>> app.get(url1, status=200).body == expected1
+         True
+
+  2. Use the resources from a module with their original routes.
+
+     If we use a URL like::
+
+       http://localhost:8080/docs/bobs/hi.html
+
+     .. -> url2 strip
+
+     We'll get output::
+
+       Hi. I'm Bob.
+
+     .. -> expected2 strip
+
+         >>> app.get(url2, status=200).body == expected2
+         True
+
+  3. Define a new route for an existing resource.
+
+
+     If we use a URL like::
+
+        http://localhost:8080/long/winded/path/bobo/lets/get/on/with/it
+
+     .. -> url3 strip
+
+     We'll get output::
+
+       Hi, I'm bobo
+
+     .. -> expected3 strip
+
+         >>> app.get(url3, status=200).body == expected3
+         True
+
+  4. Define a new route for an existing subroute.
+
+     If we use a URL like::
+
+        http://localhost:8080/us/1/
+
+     .. -> url4 strip
+
+     We'll get output::
+
+       Hi, I'm employee 1
+
+     .. -> expected4 strip
+
+         >>> app.get(url4, status=200).body == expected4
+         True
+
+  5. Use all of the routes from a module with a prefix added.
+
+     If we use a URL like::
+
+        http://localhost:8080/folks/employee/1/
+
+     .. -> url5 strip
+
+     We'll get output::
+
+       Hi, I'm employee 1
+
+     .. -> expected5 strip
+
+         >>> app.get(url5, status=200).body == expected5
+         True
+
+  6. Use an existing route adding a prefix.
+
+     If we use a URL like::
+
+        http://localhost:8080/ho/silly
+
+     .. -> url6 strip
+
+     We'll get output::
+
+       Hi, I'm silly
+
+     .. -> expected6 strip
+
+         >> app.get(url6, status=200).body == expected6
+         True
+
+Configuring routes in python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To configure routes in Python, you can use the ``bobo.resources``
+function::
+
+    import bobo
+
+    myroutes = bobo.resources((
+        # Same routes
+        'people:Employee', # 1
+        'docs',            # 2
+
+        # new routes
+        bobo.reroute(
+          '/long/winded/path/:name/lets/get/on/with/it', # 3
+          'people:hi'),                                  # 3 also
+        bobo.reroute('/us/:id', 'people:Employee'),  # 4
+
+        # prefixes
+        bobo.preroute('/folks', 'people'), # 5
+        bobo.preroute('/ho', 'people:hi'), # 6
+    ))
+
+.. -> src
+
+    >>> update_module('routemod', src)
+    >>> update_module('routemod', """
+    ... @bobo.query
+    ... def xxx():
+    ...     return 'xxx'
+    ... """)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='routemod'))
+
+    >>> app.get(url1, status=200).body == expected1
+    True
+    >>> app.get(url2, status=200).body == expected2
+    True
+    >>> app.get(url3, status=200).body == expected3
+    True
+    >>> app.get(url4, status=200).body == expected4
+    True
+    >>> app.get(url5, status=200).body == expected5
+    True
+    >>> app.get(url6, status=200).body == expected6
+    True
+    >>> app.get('http://localhost:8080/xxx.html', status=200).body == 'xxx'
+    True
+
+The ``resources`` function takes an iterable of resources, where the
+resources can be resource objects, or strings naming resource objects
+or modules.
+
+The ``reroute`` function takes a route and an existing resource and
+returns a new resource with the given route.  The resource must have a
+``bobo_route`` method, as resources created using one of the
+``query``, ``post``, ``resource`` or ``subroute`` decorators do, or
+the resource must be a class with a constructor that takes a request
+and route data and returns a resource.
+
+The ``preroute`` function takes a route and a resource and returns a
+new resource that uses the given route as a subroute to get to the
+resource.
+
+The example above is almost equivalent to the earlier
+example.  If the module containing the code above is given to the
+bobo_resources option, then the resources defined by the call will be
+used.  It is slightly different from the earlier example, because if
+the module defines any other resources, they'll be used as well.
+
+Resource modules
+~~~~~~~~~~~~~~~~
+
+Rather than defining a resource in a module, we can make a module a
+resource by defining a ``bobo_response`` module attribute::
+
+    import bobo, docs, people
+
+    bobo_response = bobo.resources((
+        # Same routes
+        people.Employee, # 1
+        docs,            # 2
+
+        # new routes
+        bobo.reroute(
+          '/long/winded/path/:name/lets/get/on/with/it', # 3
+          people.hi),                                    # 3 also
+        bobo.reroute('/us/:id', people.Employee),  # 4
+
+        # prefixes
+        bobo.preroute('/folks', people), # 5
+        bobo.preroute('/ho', people.hi), # 6
+
+    )).bobo_response
+
+.. -> src
+
+    >>> update_module('routemod2', src)
+    >>> update_module('routemod2', """
+    ... @bobo.query
+    ... def xxx():
+    ...     return 'xxx'
+    ... """)
+
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='routemod2'))
+
+    >>> app.get(url1, status=200).body == expected1
+    True
+    >>> app.get(url2, status=200).body == expected2
+    True
+    >>> app.get(url3, status=200).body == expected3
+    True
+    >>> app.get(url4, status=200).body == expected4
+    True
+    >>> app.get(url5, status=200).body == expected5
+    True
+    >>> app.get(url6, status=200).body == expected6
+    True
+    >>> _ = app.get('http://localhost:8080/xxx', status=404)
+
+Here, rather than adding a new resource to the module, we've copied the
+``bobo_response`` method from a new resource to the module, making
+the module a resource.  When bobo scans a module, it first checks
+whether the module has a ``bobo_response`` attribute. If it does,
+then bobo uses the module as a resource and doesn't scan the module for
+resources.  This way, we control precisely which resources will be used,
+given the module.
+
+This example also illustrates that, rather than passing strings to the
+``resources``, ``reroute`` and ``preroute`` functions, we can pass
+objects directly.
+
+Error response generation
+-------------------------
+
+There are three cases for which bobo has to generate error responses:
+
+1. When a resource can't be found, bobo generates a "404 Not Found"
+   response.
+2. When a resource can be found but it doesn't allow the request
+   method, bobo generates a "405 Method Not Allowed" response.
+3. When a ``query`` or ``post`` decorated function requires a
+   parameter and the parameter is isn't in the given form data, bobo
+   generates a "405 Forbidden" response with a body that indicates the
+   missing parameter.
+
+For each of these responses, bobo generates a small HTML body.
+
+Applications can take over generating error responses by specifying a
+``bobo_errors`` option that specified an object or a module defining 3
+callable attributes:
+
+not_found(request, method)
+   Generate a response when a resource can't be found.
+
+   This should return a 404 response.
+
+method_not_allowed(request, method, methods)
+   Generate a response when the resource found doesn't allow the
+   request method.
+
+   This should return a 405 response and set the ``Allowed`` response
+   header to the list of allowed headers.
+
+missing_form_variable(request, method, name)
+   Generate a response when a form variable is missing.
+
+   The proper response in this situation isn't obvious.
+
+The value given for the ``bobo_errors`` option is either a module
+name, or an object name of the form: "module_name:expression".
+
+Let's look at an example. First, an ``errorsample`` module::
+
+    import bobo, webob
+
+    @bobo.query(method='GET')
+    def hi(who):
+        return 'Hi %s' % who
+
+    def not_found(request, method):
+        return webob.Response("not found", status=404)
+
+    def method_not_allowed(request, method, methods):
+        return webob.Response(
+            "bad method "+method, status=405,
+            headerlist=[
+                ('Allow', ', '.join(methods)),
+                ('Content-Type', 'text/plain'),
+                ])
+
+    def missing_form_variable(request, method, name):
+        return webob.Response("Missing "+name)
+
+
+.. -> src
+
+    >>> update_module('errorsample', src)
+
+Then a configuration file::
+
+    [app:main]
+    use = egg:bobo
+    bobo_resources = errorsample
+    bobo_errors = errorsample
+
+.. -> ini
+
+    >>> parser = ConfigParser.ConfigParser()
+    >>> parser.readfp(StringIO.StringIO(ini))
+    >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
+
+If we use the URL::
+
+   http://localhost:8080/hi.html?who=you
+
+.. -> url1 strip
+
+We'll get the response::
+
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    Hi you
+
+.. -> expected1 strip
+
+    >>> str(app.get(url1)).strip() == expected1
+    True
+
+But if we use::
+
+   http://localhost:8080/ho
+
+.. -> url2 strip
+
+We'll get::
+
+    Response: 404 Not Found
+    Content-Type: text/html; charset=UTF-8
+    not found
+
+.. -> expected2 strip
+
+    >>> str(app.get(url2, status=404)).strip() == expected2
+    True
+
+If we use::
+
+   http://localhost:8080/hi.html
+
+.. -> url3 strip
+
+We'll get::
+
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    Missing who
+
+.. -> expected3 strip
+
+    >>> str(app.get(url3)).strip() == expected3
+    True
+
+If we make a POST to the same URL, we'll get::
+
+    Response: 405 Method Not Allowed
+    Allow: GET
+    Content-Type: text/plain
+    bad method POST
+
+.. -> expected4 strip
+
+    >>> str(app.post(url3, 'who=me', status=405)).strip() == expected4
+    True
+
+
+We can use an object with methods rather than module-level functions
+to generate error responses. Here we define an ``errorsample2`` module
+that defines an class with methods for generating error responses::
+
+   import bobo, webob
+
+   class Errors:
+
+       def not_found(self, request, method):
+           return webob.Response("not found", status=404)
+
+       def method_not_allowed(self, request, method, methods):
+           return webob.Response(
+               "bad method "+method, status=405,
+               headerlist=[
+                   ('Allow', ', '.join(methods)),
+                   ('Content-Type', 'text/plain'),
+                   ])
+
+       def missing_form_variable(self, request, method, name):
+           return webob.Response("Missing "+name)
+
+.. -> src
+
+   >>> update_module('errorsample2', src)
+
+In the configuration file, we specify an object, rather than a module::
+
+    [app:main]
+    use = egg:bobo
+    bobo_resources = errorsample
+    bobo_errors = errorsample2:Errors()
+
+.. -> ini2
+
+Note that in this example, rather than just using a global name, we
+use an expression to specify the errors object.
+
+.. check
+
+    >>> parser = ConfigParser.ConfigParser()
+    >>> parser.readfp(StringIO.StringIO(ini2))
+    >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
+
+    >>> str(app.get(url1)).strip() == expected1
+    True
+    >>> str(app.get(url2, status=404)).strip() == expected2
+    True
+    >>> str(app.get(url3)).strip() == expected3
+    True
+    >>> str(app.post(url3, 'who=me', status=405)).strip() == expected4
+    True
+
+Uncaught exceptions
+~~~~~~~~~~~~~~~~~~~
+
+Normally, bobo let's uncaught exceptions propagate to calling
+middleware or servers.  If you want to provide custom handling of
+uncaught exceptions, you can include an ``exceptions`` method in
+object you give to ``bobo_errors``.
+
+::
+
+   import bobo, webob
+
+   class Errors:
+
+       def not_found(self, request, method):
+           return webob.Response("not found", status=404)
+
+       def method_not_allowed(self, request, method, methods):
+           return webob.Response(
+               "bad method "+method, status=405,
+               headerlist=[
+                   ('Allow', ', '.join(methods)),
+                   ('Content-Type', 'text/plain'),
+                   ])
+
+       def missing_form_variable(self, request, method, name):
+           return webob.Response("Missing "+name)
+
+       def exception(self, request, method, exc_info):
+           return webob.Response("Dang! %s" % exc_info[1], status=500)
+
+.. -> src
+
+    >>> update_module('errorsample2', src)
+
+    >>> update_module('badapp',
+    ...   'import bobo\n\n@bobo.resource\ndef bad(x, y):\n  pass\n')
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='badapp'))
+    >>> app.get('/bad.html')
+    Traceback (most recent call last):
+    ...
+    TypeError: bad() takes exactly 2 arguments (1 given)
+
+    >>> app = webtest.TestApp(bobo.Application(
+    ...    bobo_resources='badapp', bobo_errors='errorsample2:Errors()'))
+    >>> app.get('/bad.html', status=500).body
+    'Dang! bad() takes exactly 2 arguments (1 given)'
+
+.. _order:
+
+Ordering Resources
+------------------
+
+When looking for resources (or sub-resources) that match a request,
+resources are tried in order, where the default order is the order of
+definition. The order can be overridden by passing an order using the
+``order`` keyword argument to the bobo decorators [#customorder]_.
+The results of calling the functions ``bobo.early()`` and
+``bobo.late()`` are typically the only values that are useful to pass.
+It is usually a good idea to use ``bobo.late()`` for subroutes that
+match any path, so that more specific routes are tried earlier.  If
+multiple resources that use ``bobo.late()`` (or ``bobo.early()``)
+match a path, the first one defined will be used.
+
+.. [#customorder] Advanced applications may provide their own
+   :term:`resource` implementations.  Custom resource implementations
+   must implement the resource interface and will provide an order
+   using the ``bobo_order`` attribute.  See :ref:`resourceinterface`.

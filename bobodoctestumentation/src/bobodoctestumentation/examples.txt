@@ -1,0 +1,328 @@
+Examples
+========
+
+File-system-based wiki
+----------------------
+
+In this section, we present a wiki implementation that stores wiki
+documents in a file-system directory:
+
+.. literalinclude:: fswiki.py
+   :language: python
+   :linenos:
+
+We need to know the name of the directory to store the files in.  On
+line 3, we define a configuration function, ``config``.
+
+To run this with the bobo server, we'll use the command line::
+
+   bobo -ffswiki.py -cconfig directory=wikidocs
+
+This tells bobo to:
+
+- run the file ``fswiki.py``
+- pass configuration information to it's config function on start up, and
+- pass the configuration directory setting of ``'wikidocs'``.
+
+On line 11, we define an ``index`` method to handle ``/`` that lists
+the documents in the wiki.
+
+On line 22, we define a post resource, ``save``, for a post to a named document
+that saves the body submitted and redirects to the same URL.
+
+On line 27, we define a query, ``get``, for the named document that
+displays it if it exists, otherwise, it displays a creation page.
+Also, if the ``edit`` form variable is present, an editing interface
+is presented.  By default, queries will accept POST requests, however,
+because the ``save`` function comes first, it is used for POST
+requests before the get function.
+
+Both the editing and creation interfaces use an edit template, which
+is just a Python string read from a file that provides a
+form. In this case, we use Dojo to provide an HTML editor for the
+body:
+
+.. literalinclude:: edit.html
+   :language: html
+
+.. _wikia:
+
+File-based wiki with authentication and (minimal) authorization
+---------------------------------------------------------------
+
+Traditionally, wikis allowed anonymous edits.  Sometimes though, you
+want to require log in to make changes.  In this example, we extend the
+file-based wiki to require authentication to make changes.
+
+Bobo doesn't provide any authentication support itself.  To provide
+authentication support for bobo applications, you'll typically use
+either an application library, or WSGI middleware.  Middleware is
+attractive because there are a number of middleware authentication
+implementations available and because authentication is generally
+something you want to apply in blanket fashion to an entire
+application.
+
+In this example, we'll use the repoze.who authentication middleware
+component, in part because it integrates well using PasteDeploy.
+
+.. literalinclude:: fswikia.py
+   :language: python
+   :linenos:
+
+We've added 2 new pages, ``login.html`` and ``logout.html``, to our
+application, starting on line 11.
+
+The login page illustrates 2 common properties of authentication
+middleware:
+
+1. The authentication user id is provided in the ``REMOTE_USER``
+   environment variable and made available in the ``remote_user``
+   request attribute.
+
+2. We signal to middleware that it should ask for credentials by
+   returning a response with a 401 status.
+
+The login method uses remote_user to check whether a user is
+authenticated. If they are, it redirects them back to the URL from
+which they were sent to the login page. Otherwise, a 401 response is
+returned, which triggers repoze.who to present a log in form.
+
+The log out form redirects the user back to the page they came from
+after deleting the authentication cookie.  The authentication cookie
+is configured in the repoze.who configuration file, ``who.ini``.
+
+We're going to want most pages to have links to the login and logout
+pages, and to display the logged in user, as appropriate. We provided
+some helper functions starting on line 23 for getting log in and log out
+URLs and for rendering a part of a page that either displays a log in
+link or the logged-in user and a log out link.
+
+The ``index`` function is modified to add the user info and log in or log out
+links.
+
+The ``save`` function illustrates a feature of the ``query``, ``post``, and
+``resource`` decorators that's especially useful for adding
+authorization checks.  The ``save`` function can't be used at all unless a
+user is authenticated.  We can pass a check function to the decorator
+that can compute a response if calling the underlying function isn't
+appropriate.  In this case, we use an ``authenticated`` function that
+returns a redirect response if a user isn't authenticated.
+
+The ``save`` method is modified to check whether the user is
+authenticated and to redirect to the login page if they're not.
+
+The ``get`` function is modified to:
+
+- Display user information and log-in/log-out links
+- Present a not-found page with a log-in link if the page doesn't
+  exist and the user isn't logged in.
+
+Some notes about this example:
+
+- The example implements a very simple *authorization* model.  A user
+  can add or edit content if they're logged in.  Otherwise they can't.
+
+- All the application knows about a user is their id.  The
+  authentication plug-in passes their log in name as their id.  A more
+  sophisticated plug-in would pass a less descriptive identifier and it
+  would be up to the application to look up descriptive information
+  from a user database based on this information.
+
+.. _wikiapaste:
+
+Assembling and running the example with Paste Deployment and Paste Script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use WSGI middleware, we'll use `Paste Deployment
+<http://pythonpaste.org/deploy/>`_ to configure the middleware and our
+application and to knit them together.  Here's the configuration file:
+
+.. literalinclude:: fswikia.ini
+   :language: ini
+
+The configuration defines 5 WSGI components, in 5 sections:
+
+``server:main``
+    This section configures a simple HTTP server running on port 8080.
+
+``app:main``
+    This section configures our application.  The options:
+
+    ``use``
+        The ``use`` option instructs Paste Deployment to run the bobo
+        main application.
+
+    ``bobo_resources``
+        The ``bobo_resources`` option tells bobo to run the application
+        in the module ``bobodoctestumentation.fswikia``.
+
+    ``bobo_configure``
+        The ``bobo_configure`` option tells bobo to call the config
+        function with the configuration options.
+
+    ``directory``
+        The ``directory`` option is used by the application to
+        determine where to store wiki pages.
+
+    ``filter-with``
+        The ``filter-with`` option tells Paste Deployment to apply the
+        reload middleware, defined by the ``filter:reload`` section to
+        the application.
+
+``filter:reload``
+    The ``filter:reload`` section defines a middleware component that
+    reloads given modules when their sources change.  It's provided by
+    the bobo egg under the name ``reload``, as indicated by the
+    ``use`` option.
+
+    The ``filter-with`` option is used to apply yet another filter,
+    ``who`` to the reload middleware.
+
+``filter:who``
+    The ``filter:who`` section configures a repose.who authentication
+    middleware component.  It uses the ``config_file`` option to
+    specify a repoze.who configuration file, ``who.ini``:
+
+    .. literalinclude:: who.ini
+       :language: ini
+
+   See the `repoze.who documentation <http://static.repoze.org/whodocs/>`_ for
+   details of configuring repoze.who.
+
+
+    The ``filter-with`` option is used again here to apply a final
+    middleware component, ``debug``.
+
+``filter:debug``
+    The ``filter:debug`` section defines a post-mortem debugging
+    middleware component that allows us to debug exceptions raised by
+    the application, or by the other 2 middleware components.
+
+In this example, we apply 3 middleware components to the bobo
+application. When a request comes in:
+
+    1. The server calls the debug component.
+
+    2. The debug component calls the who component.  If an
+       exception is raised, the ``pdb.post_mortem`` debugger is
+       invoked.
+
+    3. The who component checks for credentials and sets
+       ``REMOTE_USER`` in the request environment if they are present.
+       It then calls the reload component.  If the response from the
+       reload component has a 401 status, it presents a log in form.
+
+    4. The reload component checks to see if any of it's configured
+       module sources have changed. If so, it reloads the modules and
+       reinitializes it's application. (The reload component knows how
+       to reinitialize bobo applications and can only be used with
+       bobo application objects.)
+
+       The reload component calls the bobo application.
+
+The configuration above is intended to support development.  A
+production configuration would omit the ``reload`` and ``debug``
+components::
+
+  [app:main]
+  use = egg:bobo
+  bobo_resources = bobodoctestumentation.fswikia
+  bobo_configure = config
+  directory = wikidocs
+  filter-with = who
+
+  [filter:who]
+  use = egg:repoze.who#config
+  config_file = who.ini
+
+  [server:main]
+  use = egg:Paste#http
+  port = 8080
+
+To run the application in the foreground, we'll use::
+
+   paster serve fswikia.ini
+
+For this to work, the ``paster`` script must be installed in such a
+way that PasteScript, repoze.who, bobo, the wiki application
+module, and all their dependencies are all importable.  This can be done
+either by installing all of the necessary packages into a (real or
+`virtual <http://pypi.python.org/pypi/virtualenv>`_) Python, or using
+`zc.buildout <http://www.buildout.org/>`_.
+
+To run this example, I used a buildout that defined a ``paste`` part::
+
+  [paste]
+  recipe = zc.recipe.egg
+  eggs = PasteScript
+         repoze.who
+         bobodoctestumentation
+
+The bobodoctestumentation package is a package that includes the
+examples used in this documentation and depends on bobo.  Because the
+configuration files are in the ``bobodoctestumentation`` source
+directory, I actually ran the application this way::
+
+   cd bobodoctestumentation/src/bobodoctestumentation
+   ../../../bin/paster serve fswikia.ini
+
+Ajax calculator
+---------------
+
+This example shows how the ``application/json`` content type can be
+used in ajax [#ajax]_ applications.  We implement a small (silly) ajax
+calculator application:
+
+.. literalinclude:: bobocalc.py
+   :language: python
+   :linenos:
+
+The ``html`` method returns the application page:
+
+.. literalinclude:: bobocalc.html
+   :language: html
+   :linenos:
+
+This page presents a value, and input field and clear (C), add (+) and
+subtract (-) buttons.  When the user selects the add or subtract
+buttons, an ajax request is made to the server. The ajax request
+passes the input and current value as form data to the ``add`` or
+``sub`` resources on the server.
+
+The ``add`` and ``sub`` methods in ``bobocalc.py`` simply convert
+their arguments to integers and compute a new value which they return
+in a dictionary. Because we used the ``application/json`` content
+type, the dictionaries returned are marshaled as JSON.
+
+Static resources
+----------------
+
+We provide a resource that serves a static file-system directory.
+This is useful for serving static resources such as javascript source
+and CSS.
+
+.. literalinclude:: static.py
+   :language: python
+   :linenos:
+
+This example illustrates:
+
+traversal
+  The ``Directory.traverse`` method enables directories to be
+  traversed with a name to get to sub-directories or files.
+
+non-decorator syntax
+  We call :func:`scan_class` on the ``Directory`` and ``File`` classes
+  rather than using ``scan_class`` as a decorator so we can use the
+  application with Python 2.4 and Python 2.5.
+
+use of the :class:`bobo.NotFound` exception
+  Rather than construct a not-found ourselves, we simply raise
+  bobo.NotFound, and let bobo generate the response for us.
+
+
+----------------------------------------------------------------
+
+.. [#ajax] This isn't strictly "Ajax", because there's no XML
+   involved. The requests we're making are asynchronous and pass data
+   as form data and generally expect response data to be formatted as JSON.

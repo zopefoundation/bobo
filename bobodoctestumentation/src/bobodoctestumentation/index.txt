@@ -1,0 +1,731 @@
+Introduction
+============
+
+Bobo is a light-weight framework for creating `WSGI
+<http://wsgi.org>`_ web applications.
+
+It's goal is to be easy to learn and remember.
+
+It provides 2 features:
+
+- Mapping URLs to objects
+
+- Calling objects to generate HTTP responses
+
+It doesn't have a templateing language, a database integration layer,
+or a number of other features that can be provided by WSGI middle-ware
+or application-specific libraries.
+
+Bobo builds on other frameworks, most notably WSGI and `WebOb
+<http://pythonpaste.org/webob/>`_.
+
+.. _installation:
+
+Installation
+============
+
+Bobo can be installed in the usual ways, including using the `setup.py
+install command
+<http://docs.python.org/install/index.html#the-new-standard-distutils>`_.
+You can, of course, use `Easy Install
+<http://peak.telecommunity.com/DevCenter/EasyInstall>`_, `Buildout
+<http://www.buildout.org>`_, or `pip <http://pip.openplans.org/>`_.
+
+To use the setup.py install command, download and unpack the `source
+distribution <http://pypi.python.org/bobo>`_ and run the setup
+script::
+
+  python setup.py install
+
+Bobo works with Python 2.4, 2.5, and 2.6.  Python 3.0 support is planned.
+Of course, when using Python 2.4 and 2.5, class decorator syntax can't
+be used. You can still use the decorators by calling them with a class
+after a class is created.
+
+Getting Started
+===============
+
+Let's create a minimal web application, "hello world". We'll put it in
+a file named "hello.py"::
+
+    import bobo
+
+    @bobo.query
+    def hello():
+        return "Hello world!"
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+
+    >>> import webob, webtest, bobo
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+This application creates a single web resource, "/hello.html", that simply
+outputs the text "Hello world".
+
+Bobo decorators, like ``bobo.query`` used in the example above
+control how URLs are mapped to objects. They also control how
+functions are called and returned values converted to web responses.
+If a function returns a string, it's assumed to be HTML and used to
+construct a response.  You can control the content type used by
+passing a content_type keyword argument to the decorator.
+
+Let's try out our application.  Assuming that bobo's installed, you
+can run the application on port 8080 using [#bobooptions]_::
+
+    bobo -f hello.py
+
+This will start a web server running on localhost port 8080.  If you
+visit::
+
+    http://localhost:8080/hello.html
+
+.. -> url strip
+
+you'll get the greeting::
+
+    Hello world!
+
+.. -> expected_body strip
+
+    >>> app.get(url, status=200).body == expected_body
+    True
+
+The URL we used to access the application was determined by the name
+of the resource function and the content type used by the decorator,
+which defaults to "text/html; charset=UTF-8". Let's change the
+application so we can use a URL like::
+
+    http://localhost:8080/
+
+.. -> url strip
+
+We'll do this by providing a URL path::
+
+    @bobo.query('/')
+    def hello():
+        return "Hello world!"
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> app.get(url, status=200).body == expected_body
+    True
+
+Here, we passed a path to the ``query`` decorator.  We used a '/'
+string, which makes a URL like the one above work. (We also omitted
+the import for brevity.)
+
+We don't need to restart the server to see our changes.  The bobo
+development server automatically reloads the file if it changes.
+
+As its name suggests, the ``query`` decorator is meant to work with
+resources that return information, possibly using form data.  Let's
+modify the application to allow the name of the person to greet to be
+given as form data::
+
+    @bobo.query('/')
+    def hello(name="world"):
+        return "Hello %s!" % name
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+If a function accepts named arguments, then data will be
+supplied from form data.  If we visit::
+
+    http://localhost:8080/?name=Sally
+
+.. -> url strip
+
+We'll get the output::
+
+   Hello Sally!
+
+.. -> expected_body strip
+
+    >>> app.get(url, status=200).body == expected_body
+    True
+
+The ``query`` decorator will accept ``GET``, ``POST`` and ``HEAD``
+requests. It's appropriate when server data aren't modified.  To
+accept form data and modify data on a server, you should use the ``post``
+decorator. The ``post`` decorator works like the ``query`` decorator
+accept that it only allows ``POST`` and ``PUT`` requests and won't pass data
+provided in a query string as function arguments.
+
+::
+
+    @bobo.post('/')
+    def hello(name="world"):
+        return "Hello %s!" % name
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> app.post('/', 'name=Bob', status=200)
+    <200 OK text/html body='Hello Bob!'>
+    >>> app.put('/', 'name=Bob', status=200)
+    <200 OK text/html body='Hello Bob!'>
+
+    >>> response = app.get(url, status=405)
+    >>> response.headers['Allow']
+    'POST, PUT'
+    >>> print response.body,
+    <html>
+    <head><title>Method Not Allowed</title></head>
+    <body>Invalid request method: GET</body>
+    </html>
+
+The ``query`` and ``post`` decorators are convenient when you want to just get
+user input passed as function arguments.  If you want a bit more
+control, you can also get the request object by defining a
+``bobo_request`` parameter::
+
+    @bobo.query('/')
+    def hello(bobo_request, name="world"):
+        return "Hello %s! (method=%s)" % (name, bobo_request.method)
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> app.get('/', status=200).body
+    'Hello world! (method=GET)'
+
+The request object gives full access to all of the form data, as well
+as other information, such as cookies and input headers.
+
+The ``query`` and ``post`` decorators introspect the function they're
+applied to. This means they can't be used with callable objects that
+don't provide function meta data.  There's a low-level decorator,
+``resource`` that does no introspection and can be used with any
+callable::
+
+    @bobo.resource('/')
+    def hello(request):
+        name = request.params.get('name', 'world!')
+        return "Hello %s!" % name
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> app.get('/?name=Bob', status=200).body
+    'Hello Bob!'
+
+The ``resource`` decorator always passes the request object as the first
+positional argument to the callable it's given.
+
+Automatic response generation
+==============================
+
+The :func:`resource`, :func:`post`, and :func:`query` decorators
+provide automatic response generation when the value returned by an
+application isn't a :term:`response` object.  The generation
+of the response is controlled by the content type given to the
+``content_type`` decorator parameter.
+
+If an application returns a string, then a response is
+constructed using the string with the content type.
+
+If an application doesn't return a response or a string, then the
+handling depends on whether or not the content type is
+``'application/json``. For ``'application/json``, the returned value
+is marshalled to JSON using the ``json`` (or ``simplejson``) module, if
+present.  If the module isn't importable, or if marshaling fails, then
+an exception will be raised.
+
+If an application returns a unicode string and the content type
+isn't ``'application/json'``, the string is encoded using the
+character set given in the content_type, or using the UTF-8
+encoding, if the content type doesn't include a charset
+parameter.
+
+If an application returns a non-response non-string result and
+the content type isn't ``'application/json'``, then an
+exception is raised.
+
+If an application wants greater control over a response, it will
+generally want to construct a `webob.Response
+<http://pythonpaste.org/webob/reference.html#id2>`_ object and return
+that.
+
+.. _routes:
+
+Routes
+======
+
+We saw earlier that we could control the URLs used to access resources
+by passing a path to a decorator. The path we pass can specify a
+multi-level URL and can have placeholders, which allow us to pass data
+to the resource as part of the URL.
+
+Here, we modify the hello application to let us pass the name of the
+greeter in the URL::
+
+    @bobo.query('/greeters/:myname')
+    def hello(name="world", myname='Bobo'):
+        return "Hello %s! My name is %s." % (name, myname)
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+Now, to access the resource, we use a URL like::
+
+    http://localhost:8080/greeters/myapp?name=Sally
+
+.. -> url strip
+
+for which we get the output::
+
+    Hello Sally! My name is myapp.
+
+.. -> expected_body strip
+
+    >>> app.get(url).body == expected_body
+    True
+
+We call these paths :term:`routes` because they use a syntax inspired
+loosely by the `Ruby on Rails Routing
+<http://api.rubyonrails.org/classes/ActionController/Routing.html>`_
+system.
+
+You can have any number of placeholders or constant URL paths in a
+route.  The values associated with the placeholders will be made
+available as function arguments.
+
+If a placeholder is followed by a question mark, then the route
+segment is optional.  If we change the hello example::
+
+    @bobo.query('/greeters/:myname?')
+    def hello(name="world", myname='Bobo'):
+        return "Hello %s! My name is %s." % (name, myname)
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+we can use the URL::
+
+    http://localhost:8080/greeters?name=Sally
+
+.. -> url strip
+
+for which we get the output::
+
+    Hello Sally! My name is Bobo.
+
+.. -> expected_body strip
+
+    >>> app.get(url).body == expected_body
+    True
+
+Note, however, if we use the URL::
+
+    http://localhost:8080/greeters/?name=Sally
+
+.. -> url strip
+
+we get the output::
+
+    Hello Sally! My name is .
+
+.. -> expected_body strip
+
+    >>> app.get(url).body == expected_body
+    True
+
+Placeholders must be legal Python identifiers.  A placeholder may be
+followed by an extension.  For example, we could use::
+
+    @bobo.query('/greeters/:myname.html')
+    def hello(name="world", myname='Bobo'):
+        return "Hello %s! My name is %s." % (name, myname)
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+Here, we've said that the name must have an ".html" suffix.  To access
+the function, we use a URL like::
+
+    http://localhost:8080/greeters/myapp.html?name=Sally
+
+.. -> url strip
+
+And get::
+
+    Hello Sally! My name is myapp.
+
+.. -> expected_body strip
+
+    >>> app.get(url).body == expected_body
+    True
+
+If the placeholder is optional::
+
+    @bobo.query('/greeters/:myname?.html')
+    def hello(name="world", myname='Bobo'):
+        return "Hello %s! My name is %s." % (name, myname)
+
+.. -> src
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+Then we can use a URL like::
+
+    http://localhost:8080/greeters?name=Sally
+
+.. -> url strip
+
+    >>> app.get(url, status=200).body
+    'Hello Sally! My name is Bobo.'
+
+or::
+
+    http://localhost:8080/greeters/jim.html?name=Sally
+
+.. -> url strip
+
+    >>> app.get(url, status=200).body
+    'Hello Sally! My name is jim.'
+
+
+Subroutes
+---------
+
+Sometimes, you want to split URL matching into multiple steps.  You
+might do this to provide cleaner abstractions in your application, or
+to support more flexible resource organization.  You can use the
+subroute decorator to do this.  The subroute decorator decorates a
+callable object that returns a resource.  The subroute uses the given
+route to match the beginning of the request path.  The resource
+returned by the callable is matched against the remainder of the
+path. Let's look at an example::
+
+    import bobo
+
+    database = {
+       '1': dict(
+            name='Bob',
+            documents = {
+              'hi.html': "Hi. I'm Bob.",
+              'hobbies': {
+                'cooking.html': "I like to cook.",
+                'sports.html': "I like to ski.",
+                },
+              },
+            ),
+    }
+
+    @bobo.subroute('/employees/:employee_id', scan=True)
+    class Employees:
+
+        def __init__(self, request, employee_id):
+            self.employee_id = employee_id
+            self.data = database[employee_id]
+
+        @bobo.resource('')
+        def base(self, request):
+            return bobo.redirect(request.url+'/')
+
+        @bobo.query('/')
+        @bobo.query('/summary.html')
+        def summary(self):
+            return """
+            id: %s
+            name: %s
+            See my <a href="documents">documents</a>.
+            """ % (self.employee_id, self.data['name'])
+
+        @bobo.query('/details.html')
+        def details(self):
+            "Show employee details"
+            # ...
+
+        @bobo.post('/update.html')
+        def add(self, name, phone, fav_color):
+            "Update employee data"
+            # ...
+
+        @bobo.subroute
+        def documents(self, request):
+            return Folder(self.data['documents'])
+
+.. -> src
+
+    >>> import sys
+    >>> if sys.version_info < (2, 6):
+    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
+    ...     src += ("\nEmployees = bobo.subroute("
+    ...             "'/employees/:employee_id', scan=True)(Employees)")
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+With this example, if we visit::
+
+    http://localhost:8080/employees/1/summary.html
+
+.. -> url strip
+
+    >>> print app.get(url).body
+    <BLANKLINE>
+            id: 1
+            name: Bob
+            See my <a href="documents">documents</a>.
+    <BLANKLINE>
+
+We'll get the summary for a user.  The URL will be matched in 2
+steps. First, the path ``/employees/1`` will match the subroute.  The
+class is called with the request and employee id. Then the routes
+defined for the individual methods are searched.  The remainder of the
+path, ``/summary.html``, matches the route for the summary
+method. (Note that we provided two decorators for the summary method,
+which allows us to get to it two ways.)  The methods were scanned for
+routes because we used the ``scan`` keyword argument.
+
+The ``base`` method has a route that is an empty string. This is a special
+case that handles an empty path after matching a subroute.  The base
+method will be called for a URL like::
+
+    http://localhost:8080/employees/1
+
+.. -> url strip
+
+which would redirect to::
+
+    http://localhost:8080/employees/1/
+
+.. -> expected_location strip
+
+    >>> response = app.get(url, status=302)
+    >>> response.headers['location'] == expected_location
+    True
+
+The ``documents`` method defines another subroute. Because we left off the
+route path, the method name is used.  This returns a Folder
+instance. Let's look at the Folder class::
+
+    @bobo.scan_class
+    class Folder:
+
+        def __init__(self, data):
+            self.data = data
+
+        @bobo.query('')
+        def base(self, bobo_request):
+            return bobo.redirect(request.url+'/')
+
+        @bobo.query('/')
+        def index(self):
+            return '\n'.join('<a href="%s/">%s<a><br>' % (k, k)
+                             for k in self.data)
+
+        @bobo.subroute('/:item_id')
+        def subitem(self, request, item_id):
+            item = self.data[item_id]
+            if isinstance(item, dict):
+               return Folder(item)
+            else:
+               return Document(item)
+
+    @bobo.scan_class
+    class Document:
+
+        def __init__(self, text):
+            self.text = text
+
+        @bobo.query('')
+        def get(self):
+            return self.text
+
+.. -> src
+
+    >>> if sys.version_info < (2, 6):
+    ...     src = src.replace("\n@bobo.scan_class", "")
+    ...     src += "\nbobo.scan_class(Folder)\nbobo.scan_class(Document)"
+
+    >>> update_module('helloapp', src)
+    >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+
+The ``Folder`` and ``Document`` classes use the ``scan_class``
+decorator. The ``scan_class`` class decorator scans a class to make
+routes defined for it's methods available.  Using the ``scan_class``
+decorator is equivalent to using the ``scan`` keyword with
+``subroute`` decorator [#whyscan]_.  Now consider a URL::
+
+    http://localhost:8080/employees/1/documents/hobbies/sports.html
+
+.. -> url strip
+
+which outputs::
+
+    I like to ski.
+
+.. -> expected_body strip
+
+    >>> app.get(url).body == expected_body
+    True
+
+The URL is matched in multiple steps:
+
+1. The path ``/employees/1`` matches the ``Employees`` class.
+
+2. The path ``/documents`` matches the ``documents`` method, which returns
+   a ``Folder`` using the employee documents dictionary.
+
+3. The path ``/hobbies`` matches the ``subitem`` method of the ``Folder``
+   class, which returns the ``hobbies`` dictionary from the documents folder.
+
+4. The path ``/sports.html`` also matches the ``subitem`` ``Folder`` method,
+   which returns a ``Document`` using the text for the ``sports.html`` key.
+
+5, The empty path matches the ``get`` method of the ``Document`` class.
+
+Of course, the employee document tree can be arbitrarily deep.
+
+The ``subroute`` decorator can be applied to any callable object that
+takes a request and route data and returns a resource.
+
+Methods and REST
+----------------
+
+When we define a resource, we can also specify the HTTP methods it will
+handle.  The ``resource`` and ``query`` decorators will handle GET, HEAD and
+POST methods by default. The ``post`` decorator handles POST and PUT methods.
+You can specify one or more methods when using the ``resource``,
+``query``, and ``post`` decorators::
+
+    @bobo.resource(method='GET')
+    def hello(who='world'):
+        return "Hello %s!" % who
+
+    @bobo.resource(method=['GET', 'HEAD'])
+    def hello2(who='world'):
+        return "Hello %s!" % who
+
+If multiple resources (resource, query, or post) in a module or class
+have the same route strings, the resource used will be selected based
+on both the route and the methods allowed. (If multiple resources match
+a request, the first one defined will be used [#order]_.)
+
+::
+
+    @bobo.subroute('/employees/:employeeid')
+    class Employee:
+
+        def __init__(self, request, employee_id):
+            self.request = request
+            self.id = employee_id
+
+        @bobo.bobo.resource('', 'PUT')
+        def put(self, request):
+            "Save employee data"
+
+        @bobo.post('')
+        def new_employee(self):
+            "Add an employee"
+
+        @bobo.query('', 'GET')
+        def get(self, request):
+            "Get employee data"
+
+        @bobo.bobo.resource('/resume', 'PUT')
+        def save_resume(self, request):
+            "Save employee data"
+
+        @bobo.bobo.query('/resume')
+        def resume(self):
+            "Save employee data"
+
+The ability to provide handlers for specific methods provides support
+for the `REST architectural style
+<http://en.wikipedia.org/wiki/Representational_State_Transfer>`_.
+.. _configuration:
+
+Beyond the bobo development server
+==================================
+
+The bobo server makes it easy to get started.  Just run it with a
+source file and off you go.  When you're ready to deploy your
+application, you'll want to put your source code in an importable
+Python module (or package). Bobo publishes modules, not source
+files. The bobo server provides the convenience of converting a source
+file to a module.
+
+The bobo command-line server is convenient for getting
+started, but production applications will usually be configured with
+selected servers and middleware using `Paste Deployment
+<http://pythonpaste.org/deploy/>`. Bobo includes a Paste Deployment
+application implementation.  To use bobo with Paste Deployment, simply
+define an application section using the bobo egg::
+
+    [app:main]
+    use = egg:bobo
+    bobo_resources = hellowapp
+    bobo_configure = helloapp:configure
+    employees_database = /home/databases/employees.db
+
+    [server:main]
+    use = egg:Paste#http
+    host = localhost
+    port = 8080
+
+In this example, we're using the HTTP `server that is built into Paste
+<http://pythonpaste.org/modules/httpserver.html>`_.
+
+The application section (``app:main``) contains bobo options, as well
+as application-specific options.  In this example, we used the
+``bobo_resources`` option to specify that we want to use resources
+found in the hellowapp module, and the ``bobo_configure`` option to
+specify a configuration handler to be called with configuration data.
+
+You can put application-specific options in the application section,
+which can be used by configuration handlers.  You can provide one or
+more configuration handlers using the bobo_configure option.  Each
+configuration handler is specified as a module name and global name
+[#globalexpr]_ separated by a colon.
+
+Configuration handlers are called with a mapping object containing
+options from the application section and from the DEFAULT section, if
+present, with application options taking precedence.
+
+To start the server, you'll run the paster script installed with
+PasteScript and specify the name of your configuration file::
+
+    paster serve app.ini
+
+You'll need to install `Paste Script
+<http://pypi.python.org/pypi/PasteScript>`_ to use bobo with Paste Deployment.
+
+See :ref:`wikiapaste` for a complete example.
+
+.. [#bobooptions] You can use the ``-p`` option to control the port
+   used. To find out more about the bobo server, use the ``-h`` option
+   or see :ref:`boboserver`.
+
+.. [#whyscan] You might be wondering why we require the scan keyword in
+   the subroute decorator to scan methods for resources.  The reason
+   is that scan_class is somewhat invasive. It adds a instance method
+   to the class, which may override an existing method. This should
+   not be done implicitly.
+
+.. [#order] More precisely, the resource with the lowest :term:`order`
+   will be used.  By default, a resources order is determined by the
+   order of definition.  You can override the order by passing an
+   ``order`` keyword argument to a decorator. See :ref:`order`.
+
+.. [#globalexpr] The name can be any Python expression that doesn't
+   contain spaces. It will be evaluated using the module globals.

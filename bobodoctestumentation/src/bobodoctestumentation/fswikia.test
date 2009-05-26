@@ -1,0 +1,123 @@
+File-system wiki with authentication and (minimal) authorization
+----------------------------------------------------------------
+
+    >>> import bobo, os, webtest
+    >>> os.mkdir('docs')
+    >>> boboapp = bobo.Application(
+    ...   bobo_resources='bobodoctestumentation.fswikia',
+    ...   bobo_configure='bobodoctestumentation.fswikia:config',
+    ...   directory='docs',
+    ...   )
+    >>> app = webtest.TestApp(boboapp)
+
+    >>> print app.get('/') # doctest: +NORMALIZE_WHITESPACE
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>Bobo Wiki</title></head><body>
+      <div style="float:left">Documents</div>
+      <div style="float:right"><a
+               href="http://localhost/login.html?where=http://localhost/">log
+                                                               in</a></div>
+        <hr style="clear:both" />
+        </body></html>
+
+    >>> print app.get('/front') # doctest: +NORMALIZE_WHITESPACE
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>Not found: front</title></head><body>
+    <h1>front doesn not exist.</h1>
+    <a href="http://localhost/login.html?where=http://localhost/front">Log
+        in</a> to create it.
+            </body></html>
+
+    >>> print app.post('/front', 'body=sometext')
+    Response: 302 Found
+    Content-Type: text/html; charset=UTF-8
+    Location: http://localhost/login.html?where=http://localhost/front
+    See http://localhost/login.html?where=http://localhost/front
+
+    >>> print app.get('http://localhost/login.html'
+    ...               '?where=http://localhost/front', status=401)
+    Response: 401 Unauthorized
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+
+    >>> app = webtest.TestApp(boboapp, extra_environ=dict(REMOTE_USER='bobo'))
+
+    >>> print app.get('http://localhost/login.html'
+    ...               '?where=http://localhost/front')
+    Response: 302 Found
+    Content-Type: text/html; charset=UTF-8
+    Location: http://localhost/front
+    See http://localhost/front
+
+    >>> print app.get('/front') # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html>
+      <head>
+        <title>Create front</title>
+      ...
+      <body class="tundra">
+        <h1>Create front</h1>
+        ...
+        <form method="POST">
+          <input type="hidden" name="body" id="page_body">
+          <input type="submit" value="Save">
+        </form>
+      </body>
+    </html>
+
+    >>> print app.post('/front', 'body=sometext')
+    Response: 303 See Other
+    Content-Type: text/html; charset=UTF-8
+    Location: http://localhost/front
+    See http://localhost/front
+
+    >>> print app.get('/front') # doctest: +NORMALIZE_WHITESPACE
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>front</title></head><body>
+      <div style="float:left">front (<a href="front?edit=1">edit</a>)</div>
+      <div style="float:right">Hello: bobo
+      <a href="http://localhost/logout.html?where=http://localhost/front">log
+           out</a></div>
+      <hr style="clear:both" />sometext</body></html>
+
+    >>> print app.get('/') # doctest: +NORMALIZE_WHITESPACE
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>Bobo Wiki</title></head><body>
+        <div style="float:left">Documents</div>
+            <div style="float:right">Hello: bobo
+            <a href="http://localhost/logout.html?where=http://localhost/">log
+                      out</a></div>
+        <hr style="clear:both" />
+        <a href="front">front</a>
+        </body></html>
+
+    >>> print app.get('http://localhost/logout.html?'
+    ...               'where=http://localhost/front')
+    ... # doctest: +ELLIPSIS
+    Response: 302 Found
+    Content-Type: text/html; charset=UTF-8
+    Location: http://localhost/front
+    Set-Cookie: wiki=; expires="..."; Max-Age=0; Path=/
+    See http://localhost/front
+
+    >>> app = webtest.TestApp(boboapp)
+    >>> print app.get('/front') # doctest: +NORMALIZE_WHITESPACE
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>front</title></head><body>
+      <div style="float:left">front</div>
+      <div style="float:right"><a
+         href="http://localhost/login.html?where=http://localhost/front">log
+                                                             in</a></div>
+      <hr style="clear:both" />sometext</body></html>
+
+    >>> os.listdir('docs')
+    ['front']
+
+    >>> open(os.path.join('docs', 'front')).read()
+    'sometext'

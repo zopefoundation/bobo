@@ -1,0 +1,61 @@
+File-system wiki
+----------------
+
+    >>> import bobo, os, webtest
+    >>> os.mkdir('docs')
+    >>> app = webtest.TestApp(bobo.Application(
+    ...   bobo_resources='bobodoctestumentation.fswiki',
+    ...   bobo_configure='bobodoctestumentation.fswiki:config',
+    ...   directory='docs',
+    ...   ))
+
+    >>> print app.get('/')
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>Bobo Wiki</title></head><body>
+        Documents
+        <hr />
+        </body></html>
+
+    >>> print app.get('/front') # doctest: +ELLIPSIS
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html>
+    ...
+      <body class="tundra">
+        <h1>Create front</h1>
+        ...
+        <form method="POST">
+          <input type="hidden" name="body" id="page_body">
+          <input type="submit" value="Save">
+        </form>
+      </body>
+    </html>
+
+    >>> print app.post('/front', 'body=sometext')
+    Response: 303 See Other
+    Content-Type: text/html; charset=UTF-8
+    Location: http://localhost/front
+    See http://localhost/front
+
+    >>> print app.get('/front')
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>front</title></head><body>
+            front (<a href="front?edit=1">edit</a>)
+            <hr />sometext</body></html>
+
+    >>> print app.get('/')
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html><head><title>Bobo Wiki</title></head><body>
+        Documents
+        <hr />
+        <a href="front">front</a>
+        </body></html>
+
+    >>> os.listdir('docs')
+    ['front']
+
+    >>> open(os.path.join('docs', 'front')).read()
+    'sometext'

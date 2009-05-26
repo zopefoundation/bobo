@@ -1,0 +1,43 @@
+Sample ajax application
+-----------------------
+
+    >>> import bobo, os, webtest
+    >>> os.mkdir('docs')
+    >>> app = webtest.TestApp(bobo.Application(
+    ...   bobo_resources='bobodoctestumentation.bobocalc',
+    ...   ))
+
+    >>> print app.get('/') # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    <html>
+      <head>
+        <title>Bobocalc</title>
+        ...
+      </head>
+      <body class="tundra">
+        <h1><em>Bobocalc</em></h1>
+        Value: <span id="value">0</span>
+        <form>
+          <label for="input">Input:</label>
+          <input
+             type="text" id="input" name="input"
+             dojoType="dijit.form.ValidationTextBox" regExp="[0-9]+"
+             />
+          <button dojoType="dijit.form.Button"
+              onClick="bobocalc.clear">C</button>
+          <button dojoType="dijit.form.Button" onClick="bobocalc.add">+</button>
+          <button dojoType="dijit.form.Button" onClick="bobocalc.sub">-</button>
+        </form>
+      </body>
+    </html>
+
+    >>> print app.get('/add.json?value=0&input=42')
+    Response: 200 OK
+    Content-Type: application/json
+    {"value": 42}
+
+    >>> print app.get('/sub.json?value=42&input=42')
+    Response: 200 OK
+    Content-Type: application/json
+    {"value": 0}

@@ -1,0 +1,259 @@
+Reference
+=========
+
+:mod:`bobo` module documentation
+----------------------------------------------
+
+.. automodule:: bobo
+   :members:
+
+:mod:`boboserver` module documentation
+----------------------------------------------
+
+.. automodule:: boboserver
+   :members:
+
+.. _boboserver:
+
+The bobo server
+---------------
+
+.. program:: bobo
+
+The bobo server is a script that runs a development web server with a
+given source file or modules, and configuration options. The usage is:
+
+  bobo [options] [name=value ...]
+
+Command-line arguments are either options, or
+configuration options of the form optionname=value.
+
+Options:
+
+-f SOURCE, --file SOURCE
+   Specify a source file name to be published. It'll be converted to a module
+   named ``bobo__main__`` and will have its __file__ set to the original
+   file name.
+
+-r RESOURCE, --resource RESOURCE
+   Specify a resource, such as a module or global, to publish.
+
+-D, --debug
+   Provide post-mortem debugging.  If an uncaught exception is raised,
+   use ``pdb.post_mortem`` to debug it.
+
+-p PORT, --port PORT
+   Specify the port to listen on.
+
+-c GLOBALNAME, --configure=GLOBALNAME
+   Specify the name of a global to call with configuration data.  This is
+   shorthand for ``bobo_configure=globalname``.  This is normally a
+   name of the form ``modulename:expression``, however, if you supply
+   just an expression, the module of the first resource will be used.
+   For example, with a command like::
+
+     bobo -f my.py -c config
+
+   The ``config`` function in ``my.py`` will be used.
+
+-s ROUTE=PATH, --static ROUTE=PATH
+   Publish static files in the directory given by PATH at the route
+   given by ROUTE.
+
+   While there are middleware components that are better at publishing
+   static resources for production use, this option makes it easier to
+   get started during development.
+
+After the options, you can give configuration options as name=value
+pairs. These will be passed as configuration options to bobo and to
+any configuration handler you specify.
+
+Example::
+
+  bobo -f fswiki.py -c config directory=docs
+
+In this example, we run the application in the source file fswiki.py.
+We pass configuration data to the application's ``config`` function.
+The options include the setting of ``'doc'`` for the directory option.
+
+.. _routedetails:
+
+Advanced: resource interfaces
+-----------------------------
+
+Most applications will use the bobo-provided decorators to implement
+resources. These decorators create objects that provide certain
+methods and attributes.  Applications can implement these methods and
+attributes themselves to provide specialized behaviors.  For example,
+an application can implement bobo_response to provide a specialized
+object-look-up mechanism that doesn't use routes.
+
+The most important method is ``bobo_response``.  When bobo scans a
+module or class for resources, it looks for objects with this method.
+When handling a request, it calls this method on each of the objects
+found until a value is returned. See :ref:`resourceinterface` for more
+details.
+
+The optional methods, ``bobo_methods``, ``bobo_order`` and
+``bobo_response`` are used when scanning a module or class. Resources
+found in a module or class are ordered within the module or class
+based on values of their ``bobo_order`` attribute.  (If a resource
+doesn't have a ``bobo_order`` attribute, a value is used that is
+between those returned by ``bobo.order()`` and ``bobo.late()``.
+
+The ``bobo_route`` attribute is used to group resources within a
+module or class that have the same route.  Resources with the same
+route are treated as a single resource.  The route is matched and then
+a the first resource that accepts the request method is used.
+
+The optional :meth:`bobo_reroute` method is used by the bobo
+:func:`bobo.reroute` function to compute a new resource from an
+existing resource and a new route.
+
+.. _resourceinterface:
+
+IResource
+~~~~~~~~~
+
+.. class:: IResource
+
+   IResource is documented here to define an API that can be provided by
+   application-defined resources.  Bobo doesn't actually define an
+   IResource object.
+
+   .. method:: bobo_response(request, path, method)
+
+      Find an object to publish at the given path.
+
+      If an object is found, call it and return the result.
+
+      If no object can be found, return None.
+
+      If a resource matches a path but doesn't accept the request
+      method, a 405, method not allowed, response should be returned.
+
+      If the return value isn't a response, it should be converted to
+      a response.
+
+   .. attribute:: bobo_methods
+
+      This optional attribute specifies the HTTP request methods
+      supported by objects found by the resource.  See :ref:`routedetails`.
+      If present, it muse be a sequence of method names, or None.  If
+      it is None, then all methods are accepted.
+
+   .. attribute:: bobo_order
+
+      This optional attribute defines the precedence order for a
+      resource.  See :ref:`routedetails`.  If present, it must be an
+      integer. Resources with lower values for ``bobo_order`` are used
+      before resources with higher values.  If the attribute isn't
+      present, a very high value is assumed.
+
+      Typically, :func:`order` is called to get a value for bobo_order
+      when a resource is defined.
+
+   .. attribute:: bobo_route
+
+      This optional attribute defines the *complete* route for a resource.  See
+      :ref:`routedetails`.  If present, it must be an string.
+
+   .. method:: bobo_reroute(route)
+
+      Return a new resource for the given route.
+
+Advanced: subclassing bobo.Application
+--------------------------------------
+
+The bobo WSGI application, :class:`bobo.Application` can be subclassed
+to handle alternate request implementations. This is to allow
+applications written for frameworks using request implementations other
+than Webob to be used with bobo.  A subclass should override the
+:meth:`__call__` and :meth:`build_response` methods.
+
+The :meth:`__call__` method should:
+
+- Create a request.
+- Call ``self.bobo_response(request, path, method)`` to get a
+  response.
+- Return the result of calling the response with the ``environ`` and
+  ``start_response`` arguments passed to :meth:`__call__`.
+
+The :meth:`__call__` should look like::
+
+   def __call__(self, environ, start_response):
+        """Handle a WSGI application request.
+        """
+        request = ...
+
+        return self.bobo_response(request, request.path_info, request.method
+                                  )(environ, start_response)
+
+The request should implement as much of the `WebOb request API
+<http://pythonpaste.org/webob/reference.html#id1>`_ as practical. It
+must implement the attributes used by bobo: ``path_info``, ``method``,
+``params``, and ``POST``.
+
+The :meth:`build_response` method is used to build a response when an
+application function returns a value that isn't a response.  See the
+:class:`bobo.Application` for more information on this method.
+
+New application implementations will also want to provide matching
+development servers.  The :func:`boboserver.server` entry point accepts an
+alternate application object, making implementation of alternate
+development servers trivial.
+
+Glossary
+========
+
+.. glossary::
+
+   :sorted:
+
+   order
+       The order in which a resource is searched relative to other
+       resources.
+
+   response
+       An object that represents a web response.  This is usually a
+       `Webob response <http://pythonpaste.org/webob/#response>`_, but
+       it may be any callable object that implements the `WSGI
+       application interface
+       <http://www.python.org/dev/peps/pep-0333/#the-application-framework-side>`_.
+
+       Applications will typically return strings that are converted
+       to responses by bobo, or will construct and return Webob
+       response objects.
+
+   request
+       An object that contains information about a web request.  This
+       is a `Webob request object
+       <http://pythonpaste.org/webob/#request>`_.
+       See the Webob documentation to get details of its interface.
+
+   route
+       A URL pattern expressed as a path with placeholders, as in::
+
+          /greeters/:name/:page?.html
+
+       Routes are inspired by the `Ruby on Rails Routing
+       <http://api.rubyonrails.org/classes/ActionController/Routing.html>`_
+       system.
+
+       Placeholders are Python identifiers preceded by ":/".  If a
+       placeholder is followed by a question mark, it is optional.  A
+       placeholder may be followed by an extension.  When a route
+       matches a URL, the URL text corresponding to the placeholders
+       is passed to the application as keyword parameters.
+
+   route data
+       Values for placeholders resulting from matching a URL against a
+       route.  For example, matching the URL: ``http://localhost/a/b``
+       against the route ``/:x/:y/:z?`` results in the route data
+       ``{'x': 'a', 'y': 'b'}``.
+
+   resource
+       An object that has a bobo_response method. See :ref:`routedetails`.
+
+   routes
+       See route.

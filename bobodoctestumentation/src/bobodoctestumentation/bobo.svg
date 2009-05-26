@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   inkscape:export-filename="/Users/jim/p/bobo/dev/bobodoctestumentation/src/bobodoctestumentation/bobo.png"
+   inkscape:export-xdpi="18.312744"
+   inkscape:export-ydpi="18.312744"
+   sodipodi:docname="bobo.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.6519321"
+     inkscape:cx="637.53202"
+     inkscape:cy="741.7666"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1680"
+     inkscape:window-height="1002"
+     inkscape:window-x="0"
+     inkscape:window-y="22" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#211f4d;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 538.69353,73.757553 C 510.36293,158.49963 533.16615,207.59773 599.28009,259.46853 C 682.73411,320.89274 682.06667,385.62621 662.50085,464.93598"
+       id="path2383"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/Users/jim/p/bobo/dev/bobodoctestumentation/src/bobodoctestumentation/bobo.png"
+       inkscape:export-xdpi="18.312744"
+       inkscape:export-ydpi="18.312744" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#211f4d;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 616.40238,233.12655 C 415.76921,462.88133 265.86922,422.62166 98.782434,460.98468"
+       id="path2385"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/Users/jim/p/bobo/dev/bobodoctestumentation/src/bobodoctestumentation/bobo.png"
+       inkscape:export-xdpi="18.312744"
+       inkscape:export-ydpi="18.312744" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#211f4d;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 178.28798,547.43362 C 276.31451,527.56142 393.42638,496.31351 419.67499,394.29224 C 350.43749,274.25921 382.96203,232.06727 416.20332,214.68716 C 474.22527,190.20839 515.8921,248.44765 489.96087,281.85922 C 472.14423,294.5101 455.54034,295.03352 441.2282,272.63952"
+       id="path2387"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-filename="/Users/jim/p/bobo/dev/bobodoctestumentation/src/bobodoctestumentation/bobo.png"
+       inkscape:export-xdpi="18.312744"
+       inkscape:export-ydpi="18.312744" />
+    <g
+       id="g3221"
+       transform="matrix(1.215887,0,0,1.215887,-130.66318,-53.360583)">
+      <path
+         sodipodi:open="true"
+         transform="matrix(-0.1575875,0.4518636,0.581641,0.1597469,259.47541,-128.26184)"
+         sodipodi:end="7.2278659"
+         sodipodi:start="2.5678671"
+         d="M 432.59507,803.01246 A 61.24511,44.122822 0 1 1 519.92365,814.8173"
+         sodipodi:ry="44.122822"
+         sodipodi:rx="61.24511"
+         sodipodi:cy="779.06415"
+         sodipodi:cx="484.03391"
+         id="path3183"
+         style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#211f4d;stroke-width:13.70801735;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3185"
+         d="M 655.80516,196.94293 C 646.01826,203.00446 639.0412,211.04151 652.21393,238.76826"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.87183571;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <title>%(action)s %(name)s</title>
+
+    <style type="text/css">
+      @import "http://o.aolcdn.com/dojo/1.3.0/dojo/resources/dojo.css";
+      @import "http://o.aolcdn.com/dojo/1.3.0/dijit/themes/tundra/tundra.css";
+    </style>
+
+    <script
+       type="text/javascript"
+       src="http://o.aolcdn.com/dojo/1.3.0/dojo/dojo.xd.js.uncompressed.js"
+       djConfig="parseOnLoad: true"
+       ></script>
+
+    <script type="text/javascript">
+      dojo.require("dojo.parser");
+      dojo.require("dijit.Editor");
+      dojo.require("dijit._editor.plugins.LinkDialog")
+      dojo.require("dijit._editor.plugins.FontChoice")
+
+      function update_body() {
+          dojo.byId('page_body').value = dijit.byId('editor').getValue();
+      }
+
+      dojo.addOnLoad(update_body);
+    </script>
+
+
+  </head>
+  <body class="tundra">
+    <h1>%(action)s %(name)s</h1>
+
+    <div dojoType="dijit.Editor"
+         id="editor"
+         onChange="update_body"
+         extraPlugins="['insertHorizontalRule', 'createLink',
+                        'insertImage', 'unlink', 
+                        {name:'dijit._editor.plugins.FontChoice',
+                         command:'fontName', generic:true}
+                         ]"
+         >
+      %(body)s
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="body" id="page_body">
+      <input type="submit" value="Save">
+    </form>
+  </body>
+</html>

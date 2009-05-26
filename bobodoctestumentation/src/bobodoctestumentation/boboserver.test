@@ -1,0 +1,310 @@
+Bobo server and middleware tests
+================================
+
+These are fairly whote box tests, in that we mock up the environmeny
+of the components being tested pretty extensively.
+
+We'll start by creating a source file:
+
+    >>> open('my.py', 'w').write('''
+    ... import bobo
+    ... @bobo.query('/:me')
+    ... def hi(me, who='world'):
+    ...     return "Hi %s, I'm %s" % (who, me)
+    ... ''')
+
+For Python 2.5 and later, we'll mock the
+wsgiref.simple_server.make_server used by the bobo server. For earlier
+versions, mock paste.httpserver.server_runner:
+
+    >>> import sys
+    >>> if sys.version_info >= (2, 5):
+    ...     class Server:
+    ...         def __init__(self, host, port, app):
+    ...             self.host, self.port, self.app = host, port, app
+    ...         def serve_forever(self):
+    ...             global served_app
+    ...             served_app = self.app
+    ...             print 'serve_forever', repr(self.host), self.port
+    ...
+    ...     import wsgiref.simple_server
+    ...     make_server = wsgiref.simple_server.make_server
+    ...     wsgiref.simple_server.make_server = Server
+    ...     def restore_server():
+    ...         wsgiref.simple_server.make_server = make_server
+    ... else:
+    ...     def faux_server_runner(app, _, port):
+    ...         global served_app
+    ...         served_app = app
+    ...         print 'serve_forever', repr(''), port
+    ...
+    ...     import paste.httpserver
+    ...     server_runner = paste.httpserver.server_runner
+    ...     paste.httpserver.server_runner = faux_server_runner
+    ...     def restore_server():
+    ...         paste.httpserver.server_runner = server_runner
+
+Now, let't run the server. We'll run it without arguments and make
+sure we het some help:
+
+    >>> stderr = sys.stderr
+    >>> sys.stderr = sys.stdout
+
+    >>> import boboserver
+
+>>> import sys
+>>> sys.argv[0] = 'test'
+>>> try: boboserver.server([])
+... except SystemExit: pass
+... else: print '???'
+Error:
+No resources were specified.
+<BLANKLINE>
+Usage: test [options] name=value ...
+<BLANKLINE>
+Options:
+  -h, --help            show this help message and exit
+  -p PORT, --port=PORT  Specify the port to listen on.
+  -f FILE, --file=FILE  Specify a source file to publish.
+  -r RESOURCE, --resource=RESOURCE
+                        Specify a resource, such as a module or module global,
+                        to publish.
+  -D, --debug           Run the post mortem debugger for uncaught exceptions.
+  -c CONFIGURE, --configure=CONFIGURE
+                        Specify the bobo_configure option.
+  -s STATIC, --static=STATIC
+                        Specify a route and directory (route=directory) to
+                        serve statically
+
+And run it with a source file:
+
+    >>> boboserver.server(['-fmy.py'])
+    Serving ['bobo__main__'] on port 8080...
+    serve_forever '' 8080
+
+    >>> import webob, pprint
+    >>> def start_response(status, headers):
+    ...     print status
+    ...     pprint.pprint(headers)
+    ...     print '-----------------'
+
+    >>> def req(*args, **kw):
+    ...     print served_app(webob.Request.blank(*args, **kw).environ,
+    ...                      start_response)
+
+    >>> req('/foo')
+    200 OK
+    [('Content-Type', 'text/html; charset=UTF-8'), ('Content-Length', '17')]
+    -----------------
+    ["Hi world, I'm foo"]
+
+If we change the source, it will be reloaded:
+
+    >>> import time
+    >>> time.sleep(1.1)
+
+    >>> open('my.py', 'w').write('''
+    ... import bobo
+    ... @bobo.query('/:me')
+    ... def hi(me, who='world'):
+    ...     return "Hi %s, I'm %s!" % (who, me)
+    ... ''')
+
+    >>> req('/foo')
+    Reloading bobo__main__
+    200 OK
+    [('Content-Type', 'text/html; charset=UTF-8'), ('Content-Length', '18')]
+    -----------------
+    ["Hi world, I'm foo!"]
+
+Let's publish a module with an error:
+
+    >>> open('foo.py', 'w').write('''
+    ... import bobo
+    ... @bobo.query('/x')
+    ... def x():
+    ...     return "x", y
+    ... ''')
+    >>> sys.path.insert(0, '.')
+
+    >>> import pdb, traceback
+    >>> post_mortem = pdb.post_mortem
+    >>> def faux_post_mortem(tb):
+    ...     print 'post_mortem:'
+    ...     traceback.print_tb(tb, 1)
+    >>> pdb.post_mortem = faux_post_mortem
+
+    >>> boboserver.server(['-rfoo', '-fmy.py', '-p80', '-D'])
+    Serving ['foo', 'bobo__main__'] on port 80...
+    serve_forever '' 80
+
+    >>> try: req('/x')
+    ... except Exception, v: print 'raised', v
+    ... else: print '???'
+    ... # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+    ...
+    NameError: global name 'y' is not defined
+    post_mortem:
+    ...
+        return self.app(environ, start_response)
+    raised global name 'y' is not defined
+
+    >>> time.sleep(1.1)
+
+    >>> open('my.py', 'w').write('''
+    ... import bobo
+    ... @bobo.query('/:me')
+    ... def hi(me):
+    ...     return "Hi you, I'm %s!" % (who, me)
+    ... ''')
+
+    >>> open('foo.py', 'w').write('''
+    ... import bobo
+    ... @bobo.query('/x')
+    ... def x():
+    ...     return "x"
+    ... ''')
+
+    >>> req('/x')
+    Reloading foo
+    Reloading bobo__main__
+    200 OK
+    [('Content-Type', 'text/html; charset=UTF-8'), ('Content-Length', '1')]
+    -----------------
+    ['x']
+
+The --static option is handy for publishing static files. There are
+middleware components that are better for serving static data in
+production, but the --static option is useful when just getting
+started.
+
+    >>> import os, webtest
+    >>> os.mkdir('docs')
+    >>> os.mkdir(os.path.join('docs', 'subdir'))
+    >>> open(os.path.join('docs', 'doc1.txt'), 'w').write('doc1 text')
+    >>> open(os.path.join('docs', 'subdir', 'doc2.html'), 'w').write(
+    ...    'doc2 text')
+
+    >>> boboserver.server(['-s/resources=docs'])
+    Serving ["boboserver:static('/resources','docs')"] on port 8080...
+    serve_forever '' 8080
+
+    >>> app = webtest.TestApp(served_app)
+    >>> app.get('/resources') # doctest: +NORMALIZE_WHITESPACE
+    <302 Found text/html
+       location: http://localhost/resources/ body='See http:...ces/'/31>
+
+    >>> print app.get('/resources/', status=200).body
+    <html>
+            <head><title></title></head>
+            <body>
+              <a href="doc1.txt">doc1.txt</a><br>
+      <a href="subdir/">subdir/</a>
+            </body>
+            </html>
+    <BLANKLINE>
+
+    >>> app.get('/resources/subdir') # doctest: +NORMALIZE_WHITESPACE
+    <302 Found text/html
+      location: http://localhost/resources/subdir/ body='See http:...dir/'/38>
+
+    >>> print app.get('/resources/subdir/', status=200).body
+    <html>
+            <head><title>subdir</title></head>
+            <body>
+              <a href="doc2.html">doc2.html</a>
+            </body>
+            </html>
+    <BLANKLINE>
+
+    >>> app.get('/resources/doc1.txt')
+    <200 OK text/plain body='doc1 text'>
+
+    >>> app.get('/resources/subdir/doc2.html')
+    <200 OK text/html body='doc2 text'>
+
+    >>> print app.get('/resources/doc2.html', status=404).body,
+    <html>
+    <head><title>Not Found</title></head>
+    <body>Could not find: /resources/doc2.html</body>
+    </html>
+
+    >>> print app.get('/resources//etc/passwd', status=404).body,
+    <html>
+    <head><title>Not Found</title></head>
+    <body>Could not find: /resources//etc/passwd</body>
+    </html>
+
+    >>> print app.get('/resources/../../', status=404).body,
+    <html>
+    <head><title>Not Found</title></head>
+    <body>Could not find: /resources/../../</body>
+    </html>
+
+Cleanup:
+
+    >>> restore_server()
+    >>> sys.stderr = stderr
+    >>> pdb.post_mortem = post_mortem
+
+Real server tests to make sure we can actually run the server. :)
+-----------------------------------------------------------------
+
+    >>> open('my.py', 'w').write('''
+    ... import bobo, os
+    ...
+    ... @bobo.query(method=None, content_type='text/plain')
+    ... def method(bobo_request):
+    ...     return "You made a %s request." % bobo_request.method
+    ...
+    ... @bobo.query
+    ... def exit():
+    ...     os._exit(0) # wsgiref catches all exceptions :(
+    ... ''')
+
+    >>> import bobodoctestumentation.tests
+    >>> port = bobodoctestumentation.tests.get_port()
+
+Whimper. I hate using processes in tests.
+
+    >>> import subprocess
+    >>> open('serve.py', 'w').write('''
+    ... import sys
+    ... sys.path[:] = %r
+    ... import boboserver
+    ... boboserver.server()
+    ... ''' % sys.path)
+
+    >>> proc = subprocess.Popen(
+    ...     [sys.executable, 'serve.py', '-p%s' % port, '-fmy.py'],
+    ...     stderr=subprocess.STDOUT, stdout=open('log', 'w'))
+
+    >>> import urllib2, time
+    >>> deadline = time.time()+30
+    >>> while 1:
+    ...     try:
+    ...         print urllib2.urlopen(
+    ...             'http://localhost:%s/method.plain' % port).read()
+    ...         break
+    ...     except urllib2.URLError:
+    ...         if time.time() > deadline:
+    ...             print 'Timed out!'
+    ...             break
+    ...         time.sleep(.1)
+    You made a GET request.
+
+urllib2 doesn't do PUT :(
+
+    >>> import httplib
+    >>> conn = httplib.HTTPConnection('localhost', port)
+    >>> conn.request('PUT', '/method.plain')
+    >>> print conn.getresponse().read()
+    You made a PUT request.
+
+    >>> conn.close()
+
+    >>> try: urllib2.urlopen('http://localhost:%s/exit.html' % port)
+    ... except Exception: pass
+    ... else: print 'expected 500'
+

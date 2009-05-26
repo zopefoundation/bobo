@@ -1,0 +1,839 @@
+Decorator module tests
+======================
+
+Route compilation
+-----------------
+
+Internal function _route_compile compiles route strings to matching
+fuctions that return None when there is no match and a dictionary of
+rout data when there is. Although it is internal, it provides a nice
+place to test the route handling. We'll use a helper function to try
+it.
+
+    >>> import bobo, pprint, webob
+    >>> def test(route, url, partial=False):
+    ...     match = bobo._compile_route(route, partial)
+    ...     request = webob.Request.blank(url)
+    ...     d = match(request, request.path_info)
+    ...     if d is None:
+    ...        return
+    ...     if partial:
+    ...        d, path = d
+    ...        print repr(path)
+    ...     if not d or len(d) == 1:
+    ...        print repr(d)
+    ...     else:
+    ...        pprint.pprint(d, width=1)
+    ...     if not isinstance(partial, basestring):
+    ...        return
+    ...     match = bobo._compile_route(partial)
+    ...     d = match(request, path)
+    ...     if d is None:
+    ...        return
+    ...     if not d or len(d) == 1:
+    ...        print repr(d)
+    ...     else:
+    ...        pprint.pprint(d, width=1)
+
+We give a route and a url and an optional partial march flag.
+Non-partial routes must match the entire URL path. Partial matches can
+have a trailing string.  Note that a non-empty bobo_path_info always starts
+with a '/'.
+
+If the partial flag is a string, then we treat it as a subroute and,
+if the initial route matches, we try to match against the subroute.
+
+Some things to note:
+
+- A leading '/' is added to non-empty routes that lack one.
+
+- If path segment is optional, the optional part includes the
+  preceeding '/' and the extension.
+
+- An exception: an optional segment with an extension only matches at
+  the end of a url if either the segment is present or the url has a
+  trailing slash.
+
+    >>> test('/', '')
+    >>> test('/', '/')
+    {}
+    >>> test('', '/')
+    >>> test('', '/', partial=True)
+    '/'
+    {}
+    >>> test('/', '/foo')
+    >>> test('/', '/foo', partial=True)
+    '/foo'
+    {}
+    >>> test('/foo', '/foo')
+    {}
+    >>> test('/foo/', '/foo')
+    >>> test('/foo/', '/foo/')
+    {}
+    >>> test('/foo/', '/foo/bar')
+    >>> test('/foo/', '/foo/bar', '/bar')
+    '/bar'
+    {}
+    {}
+    >>> test('/:x', '')
+    >>> test('/:x', '/')
+    {'x': ''}
+    >>> test('/:x', '/a')
+    {'x': 'a'}
+    >>> test('/:x', '/aa')
+    {'x': 'aa'}
+    >>> test('/:xx', '')
+    >>> test('/:xx', '/')
+    {'xx': ''}
+    >>> test('/:xx', '/a')
+    {'xx': 'a'}
+    >>> test('/:xx', '/aa')
+    {'xx': 'aa'}
+    >>> test('/zzz/:xx', '/zzz')
+    >>> test('/zzz/:xx', '/zzz/')
+    {'xx': ''}
+    >>> test('/zzz/:xx', '/zzz/a')
+    {'xx': 'a'}
+    >>> test('/zzz/:xx', '/zzz/aa')
+    {'xx': 'aa'}
+    >>> test('/:xx/:y', '/a')
+    >>> test('/:xx/:y', '/a/')
+    {'xx': 'a',
+     'y': ''}
+    >>> test('/:xx/:y', '/a/b')
+    {'xx': 'a',
+     'y': 'b'}
+    >>> test('/zzz/:xx/www/:y', '/a/b')
+    >>> test('/zzz/:xx/www/:y', '/zzz/aa/www/bb')
+    {'xx': 'aa',
+     'y': 'bb'}
+    >>> test('/zzz/:xx/www/:y.html', '/zzz/aa/www/bb.html')
+    {'xx': 'aa',
+     'y': 'bb'}
+    >>> test('/zzz/:xx/www/:yy.html', '/zzz/aa/www/b.html')
+    {'xx': 'aa',
+     'yy': 'b'}
+    >>> test('/zzz/:xx?/www/:yy.html', '/zzz/aa/www/b.html')
+    {'xx': 'aa',
+     'yy': 'b'}
+    >>> test('/zzz/:xx?/www/:yy.html', '/zzz/www/b.html')
+    {'yy': 'b'}
+    >>> test('/zzz/:xx/www/:yy?.html', '/zzz/qq/www')
+    {'xx': 'qq'}
+    >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www')
+    {}
+    >>> test('/zzz/:xx?/:yy?.html', '/zzz')
+    {}
+    >>> test('/zzz/:xx?/:yy?.html', '/zzz/')
+    {'xx': ''}
+    >>> test('/zzz/:xx?/:yy?', '/zzz')
+    {}
+    >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www/')
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www')
+    {'xx': 'aaa'}
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/')
+    {'xx': 'aaa',
+     'yy': ''}
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc')
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/ccc')
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
+    {}
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo')
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
+    {'foo': 'ccc'}
+    >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo/:bar?')
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
+    {'foo': 'ccc'}
+    >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc')
+    >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc', '/ccc')
+    '/bbb/ccc'
+    {'xx': 'aaa'}
+    >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/ccc')
+    '/ccc'
+    {'xx': 'aaa'}
+    {}
+    >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/:ccc')
+    '/ccc'
+    {'xx': 'aaa'}
+    {'ccc': 'ccc'}
+
+resource
+--------
+
+The resource decorator defines a resource function and gives it a
+route.  It also provides automation of response creation.
+
+    >>> @bobo.resource('/foo', method='GET')
+    ... @bobo.resource('/:name', content_type='text/plain; charset=Latin-1')
+    ... def hi(request, name=None):
+    ...     print 'request:'
+    ...     print str(request).replace('\r', '')
+    ...     print '-----'
+    ...     return 'Hi %s.' % name
+
+As we can see, we can stack resources.  We can supply a content type.
+
+We use resources by calling the result of calling bobo_response:
+
+    >>> def print_response(response):
+    ...     print (response.status + '\n'
+    ...            + '\n'.join('%s: %s' % (name, value)
+    ...                        for (name, value) in sorted(response.headerlist))
+    ...            + '\n\n'
+    ...            + response.body)
+
+    >>> import webob, StringIO
+    >>> def call_resource(resource, url, input=None, env=None, **kw):
+    ...     env = env or {}
+    ...     if input:
+    ...         env['wsgi.input'] = StringIO.StringIO(input)
+    ...         env['CONTENT_LENGTH'] = str(len(input))
+    ...         env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+    ...         env['REQUEST_METHOD'] = 'POST'
+    ...     request = webob.Request.blank(url, env, **kw)
+    ...     try:
+    ...         found = resource.bobo_response(
+    ...             request, request.path_info, request.method)
+    ...         if found is not None:
+    ...             print_response(found)
+    ...     except bobo.BoboException, v:
+    ...         print v.__class__.__name__+':'
+    ...         pprint.pprint(v.__dict__, width=1)
+
+    >>> call_resource(hi, '/foo')
+    request:
+    GET /foo
+    Host: localhost:80
+    <BLANKLINE>
+    <BLANKLINE>
+    -----
+    BoboException:
+    {'body': 'Hi None.',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+When a callable doesn't returns a non-response, a BoboException is
+raised.  It gets caught by the bobo Application and used to build a
+response.
+
+Note that we matched the first resource because resources are checked in
+order.
+
+    >>> call_resource(hi, '/bar')
+    request:
+    GET /bar
+    Host: localhost:80
+    <BLANKLINE>
+    <BLANKLINE>
+    -----
+    BoboException:
+    {'body': 'Hi bar.',
+     'content_type': 'text/plain; charset=Latin-1',
+     'headers': [],
+     'status': 200}
+
+Here, we matched the second caller and passed the name.
+
+    >>> call_resource(hi, '/foo', method='HEAD')
+    Traceback (most recent call last):
+    ...
+    MethodNotAllowed: Allowed: 'GET'
+
+This time, we matched the first resource, but the method was invalid,
+so a MethodNotAllowed exception was raised.
+
+Notice that we didn't match the first route even though the URL
+matched the route pattern. This is because the request method didn't
+match.
+
+Calling the resource calls the underliting function:
+
+    >>> hi(None)
+    request:
+    None
+    -----
+    'Hi None.'
+
+    >>> hi(None, 'bob')
+    request:
+    None
+    -----
+    'Hi bob.'
+
+It is invalid to specify a non-empty route without a leading /:
+
+    >>> @bobo.resource(':name', content_type='text/plain; charset=Latin-1')
+    ... def hi(request, name=None):
+    ...     pass
+    Traceback (most recent call last):
+    ...
+    ValueError: ("Non-empty routes must start with '/'.", ':name')
+
+If the content type is application/json and a resource has a
+non-response, non-string response, the response will be automatically
+encoded as json:
+
+    >>> @bobo.resource('/:type?', content_type='application/json')
+    ... def uni(request, type=None):
+    ...     val = u'\uaaaa'
+    ...     if type=='array':
+    ...         return [val]
+    ...     elif type == 'ob':
+    ...         return {'val': val}
+    ...     return '"\\uaaaa"'
+
+    >>> call_resource(uni, '/')
+    BoboException:
+    {'body': '"\\uaaaa"',
+     'content_type': 'application/json',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(uni, '/array')
+    BoboException:
+    {'body': [u'\uaaaa'],
+     'content_type': 'application/json',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(uni, '/ob')
+    BoboException:
+    {'body': {'val': u'\uaaaa'},
+     'content_type': 'application/json',
+     'headers': [],
+     'status': 200}
+
+If a callable returns a response, then we don't get a bobo exception:
+
+    >>> @bobo.resource('/:name', content_type='text/plain; charset=Latin-1')
+    ... def hi(request, name=None):
+    ...     print 'request:'
+    ...     print str(request).replace('\r', '')
+    ...     print '-----'
+    ...     return webob.Response('Hi %s.' % name)
+
+    >>> call_resource(hi, '/bar')
+    request:
+    GET /bar
+    Host: localhost:80
+    <BLANKLINE>
+    <BLANKLINE>
+    -----
+    200 OK
+    Content-Length: 7
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    Hi bar.
+
+query and post
+--------------
+
+The query and post decorators provide extra convenience by marshaling
+request query and/or post data as function parameters.
+
+    >>> @bobo.query('/:bobo_request/:x?')
+    ... def foo(bobo_request, x, y, z=None):
+    ...     return "%s %s %s %s" % (type(bobo_request).__name__, x, y, z)
+
+    >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3')
+    BoboException:
+    {'body': 'Request b 3 None',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3')
+    BoboException:
+    {'body': 'Request 2 3 None',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+Note that the name bobo_request is reserved. It is also set to the
+request, even if the name is in the form data or in the route data.
+Also, route data takes precedence over form data.
+
+The query decorators will also use form data:
+
+    >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5')
+    BoboException:
+    {'body': "Request 2 ['3', '4'] 5",
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+If parameters are ommitted, we'll get a MissingFormVariable error:
+
+    >>> call_resource(foo, '/a/b')
+    Traceback (most recent call last):
+    ...
+    MissingFormVariable: y
+
+The post decorator will *only* use form data:
+
+    >>> @bobo.post('/:bobo_request/:x?')
+    ... def foo(bobo_request, x, y, z=None):
+    ...     return "%s %s %s %s" % (type(bobo_request).__name__, x, y, z)
+
+    >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
+    BoboException:
+    {'body': 'Request 6 4 5',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
+    BoboException:
+    {'body': 'Request b 4 5',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(foo, '/a/b', 'z=1')
+    Traceback (most recent call last):
+    ...
+    MissingFormVariable: y
+
+Resources as methods
+--------------------
+
+If a resource is defined in a class, it handles binding correctly.
+
+    >>> class C:
+    ...     def __init__(self, request=None):
+    ...         self.x = 99
+    ...
+    ...     @bobo.resource('/a/:y')
+    ...     def m1(self, request, y):
+    ...         return "%s %s %s" % (request.__class__.__name__, self.x, y)
+    ...
+    ...     @bobo.query('/b/:y')
+    ...     def m2(self, y, z):
+    ...         return "%s %s %s" % (self.x, y, z)
+
+    >>> C.m1
+    <unbound resource C.m1>
+
+    >>> C.m1(None, 1)
+    Traceback (most recent call last):
+    ...
+    TypeError: Need C initial argument
+
+    >>> C.m1(C(), None, 1)
+    'NoneType 99 1'
+
+    >>> C().m1 # doctest: +ELLIPSIS
+    <bound resource C.m1 of <__builtin__.C instance at ...>>
+
+    >>> C().m1(None, 1)
+    'NoneType 99 1'
+
+    >>> call_resource(C().m1, '/b/b')
+
+    >>> call_resource(C().m1, '/a/b')
+    BoboException:
+    {'body': 'Request 99 b',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> C.m2
+    <unbound resource C.m2>
+
+    >>> C.m2(None, 1, 2)
+    Traceback (most recent call last):
+    ...
+    TypeError: Need C initial argument
+
+    >>> C.m2(C(), 1, 2)
+    '99 1 2'
+
+    >>> C().m2 # doctest: +ELLIPSIS
+    <bound resource C.m2 of <__builtin__.C instance at ...>>
+
+    >>> C().m2(1, 2)
+    '99 1 2'
+
+    >>> call_resource(C().m2, '/a/b')
+
+    >>> call_resource(C().m2, '/b/b?z=3')
+    BoboException:
+    {'body': '99 b 3',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+subroute
+--------
+
+The subroute decorator is used with a factory that returns a resource.
+
+    >>> @bobo.resource('/foo')
+    ... def hi(request, name=None):
+    ...     print 'request:'
+    ...     print str(request).replace('\r', '')
+    ...     print '-----'
+    ...     return 'Hi %s.' % name
+
+    >>> def sub1(request, first):
+    ...     print 'sub1', first
+    ...     return hi
+    >>> sub1 = bobo.subroute('/:first')(sub1)
+
+    >>> call_resource(sub1, '/x/y/z')
+    sub1 x
+
+    >>> call_resource(sub1, '/x/foo')
+    sub1 x
+    request:
+    GET /x/foo
+    Host: localhost:80
+    <BLANKLINE>
+    <BLANKLINE>
+    -----
+    BoboException:
+    {'body': 'Hi None.',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+If we try to use subroute with C, we lose because C doesn't have a
+bobo_response method.
+
+    >>> bobo.subroute('/x')(C) is C
+    True
+    >>> call_resource(C, '/x/a/b')
+    Traceback (most recent call last):
+    ...
+    AttributeError: C instance has no attribute 'bobo_response'
+
+C doesn't have a bobo_response method. We can use scan_class to
+give it one:
+
+    >>> bobo.scan_class(C) is C
+    True
+    >>> call_resource(C, '/x/a/b')
+    BoboException:
+    {'body': 'Request 99 b',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+We can get the same effect using the scan keyword argument to
+subroute.
+
+    >>> class B:
+    ...     @bobo.resource('/a/:y')
+    ...     def m1(self, request, y):
+    ...         return "%s %s %s" % (request.__class__.__name__, self.x, y)
+
+    >>> class C(B):
+    ...     def __init__(self, request, x):
+    ...         self.x = x
+    ...
+    ...     @bobo.query('/b/:y')
+    ...     def m2(self, y, z):
+    ...         return "%s %s %s" % (self.x, y, z)
+
+    >>> bobo.subroute('/:x', scan=True)(C) is C
+    True
+
+    >>> call_resource(C, '/pre/a/b')
+    BoboException:
+    {'body': 'Request pre b',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(C, '/pro/b/c?z=1')
+    BoboException:
+    {'body': 'pro c 1',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+Scanning classes with duplicate routes
+--------------------------------------
+
+    >>> class B:
+    ...     @bobo.resource('/:y', 'GET')
+    ...     def gety(self, request, y):
+    ...         return "B.gety %s %s %s" % (request.method, self.x, y)
+    ...     @bobo.resource('', 'GET')
+    ...     def get(self, request, y=None):
+    ...         return "B.get %s %s %s" % (request.method, self.x, y)
+
+    >>> class C(B):
+    ...     def __init__(self, request, x):
+    ...         self.x = x
+    ...
+    ...     @bobo.resource('/:y', 'POST')
+    ...     def posty(self, request, y):
+    ...         return "C.posty %s %s %s" % (request.method, self.x, y)
+    ...     @bobo.resource('', 'POST')
+    ...     def post(self, request, y=None):
+    ...         return "C.post %s %s %s" % (request.method, self.x, y)
+
+    >>> bobo.subroute('/:x', True)(C) is C
+    True
+
+    >>> call_resource(C, '/pre')
+    BoboException:
+    {'body': 'B.get GET pre None',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(C, '/pre', method='POST')
+    BoboException:
+    {'body': 'C.post POST pre None',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(C, '/pre', method='HEAD')
+    Traceback (most recent call last):
+    ...
+    MethodNotAllowed: Allowed: 'GET', 'POST'
+
+    >>> call_resource(C, '/pre/a')
+    BoboException:
+    {'body': 'B.gety GET pre a',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(C, '/pre/a', method='POST')
+    BoboException:
+    {'body': 'C.posty POST pre a',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(C, '/pre/a', method='HEAD')
+    Traceback (most recent call last):
+    ...
+    MethodNotAllowed: Allowed: 'GET', 'POST'
+
+subroutes don't screw up other uses of a class
+----------------------------------------------
+
+    >>> class D(C):
+    ...     pass
+
+    >>> request = webob.Request.blank('/')
+    >>> d = D(request, 'zzz')
+    >>> d.gety(request, 22)
+    'B.gety GET zzz 22'
+
+check option
+------------
+
+The query, post, and resource decorators have a check option that can
+be used to express preconditions on resources.  The check option takes
+a function that will be called with a request prior to calling a
+resource. If the check function returns None, then the function will be
+called as usual.  Otherwise, the returned value from the check
+function is used as the response.
+
+The check function takes 3 positional arguments:
+
+- an instance, if the resource is a method, or None,
+- the request, and
+- the decorated callable.
+
+    >>> def authenticated(inst, request, func):
+    ...     if not request.remote_user:
+    ...         response = webob.Response(status=401)
+    ...         message = u'unauthenticated '+func.__name__
+    ...         message += ' '+inst.__class__.__name__
+    ...         response.unicode_body = message
+    ...         return response
+
+    >>> @bobo.query(check=authenticated)
+    ... def hi(self=None):
+    ...     return 'Hi! '+self.__class__.__name__
+
+    >>> class C:
+    ...     hi = hi
+    >>> c = C()
+
+    >>> call_resource(hi, '/')
+    >>> call_resource(c.hi, '/')
+
+    >>> call_resource(hi, '/hi.html')
+    401 Unauthorized
+    Content-Length: 27
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi NoneType
+
+    >>> call_resource(c.hi, '/hi.html')
+    401 Unauthorized
+    Content-Length: 20
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi C
+
+    >>> call_resource(hi, '/hi.html', env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi! NoneType',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(c.hi, '/hi.html', env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi! C',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> @bobo.post(check=authenticated)
+    ... def hi(self=None):
+    ...     return 'Hi! '+self.__class__.__name__
+
+    >>> call_resource(hi, '/')
+    >>> call_resource(c.hi, '/')
+    >>> call_resource(hi, '/hi.html', input='x=1')
+    401 Unauthorized
+    Content-Length: 27
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi NoneType
+
+    >>> call_resource(c.hi, '/hi.html', input='x=1')
+    401 Unauthorized
+    Content-Length: 20
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi C
+
+    >>> call_resource(hi, '/hi.html', input='x=1', env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi! NoneType',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(c.hi, '/hi.html', input='x=1',
+    ...               env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi! C',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> @bobo.resource(check=authenticated)
+    ... def hi(request):
+    ...     return 'Hi! '+request.url
+
+    >>> class C:
+    ...     @bobo.resource(check=authenticated)
+    ...     def hi(self, request):
+    ...         return 'Hi C! '+request.url
+    >>> c = C()
+
+    >>> call_resource(hi, '/')
+    >>> call_resource(c.hi, '/')
+
+    >>> call_resource(hi, '/hi.html')
+    401 Unauthorized
+    Content-Length: 27
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi NoneType
+
+    >>> call_resource(c.hi, '/hi.html')
+    401 Unauthorized
+    Content-Length: 20
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    unauthenticated hi C
+
+    >>> call_resource(hi, '/hi.html', env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi! http://localhost/hi.html',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+    >>> call_resource(c.hi, '/hi.html', env=dict(REMOTE_USER='jim'))
+    BoboException:
+    {'body': 'Hi C! http://localhost/hi.html',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+subroute class-manipulation edge cases
+--------------------------------------
+
+Subroute on class that already has class method:
+
+    >>> class C:
+    ...     @classmethod
+    ...     def bobo_response(self, request, path, method):
+    ...         return webob.Response('C')
+
+    >>> bobo.subroute(C)
+    Traceback (most recent call last):
+    ...
+    TypeError: bobo_response class method already defined
+
+Subroute on class with inherited class method:
+
+(Also subroute on class that has instance method)
+
+    >>> class S(C):
+    ...     def __init__(self, request):
+    ...         pass
+    ...     def bobo_response(self, request, path, method):
+    ...         return webob.Response('s')
+
+    >>> S = bobo.subroute(S)
+    >>> call_resource(S, '/S')
+    200 OK
+    Content-Length: 1
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    s
+
+Subroute on class that adds method in __init__:
+
+    >>> class I:
+    ...     def __init__(self, request):
+    ...         self.bobo_response = (lambda request, path, method:
+    ...                               webob.Response('i'))
+
+    >>> I = bobo.subroute(I)
+    >>> call_resource(I, '/I')
+    200 OK
+    Content-Length: 1
+    Content-Type: text/html; charset=UTF-8
+    <BLANKLINE>
+    i
+
+subroute factory can return None
+--------------------------------
+
+    >>> @bobo.subroute
+    ... def traverse(request):
+    ...     print 'traverse'
+
+    >>> call_resource(traverse, '/traverse/x')
+    traverse
+
+    >>> class Traverse(object):
+    ...     def __new__(class_, request):
+    ...         print 'Traverse'
+    >>> Traverse = bobo.subroute(Traverse)
+
+    >>> call_resource(Traverse, '/Traverse/x')
+    Traverse
