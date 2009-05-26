@@ -37,7 +37,7 @@ script::
 
   python setup.py install
 
-To run bobo's tests, just use the etst command::
+To run bobo's tests, just use the test command::
 
   python setup.py test
 
