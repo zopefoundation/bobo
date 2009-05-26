@@ -731,7 +731,7 @@ See :ref:`wikiapaste` for a complete example.
 .. [#order] More precisely, the resource with the lowest :term:`order`
    will be used.  By default, a resources order is determined by the
    order of definition.  You can override the order by passing an
-   ``order`` keyword argument to a decorator. See :ref:`order`.
+   ``order`` keyword argument to a decorator. See :ref:`orderl`.
 
 .. [#globalexpr] The name can be any Python expression that doesn't
    contain spaces. It will be evaluated using the module globals.

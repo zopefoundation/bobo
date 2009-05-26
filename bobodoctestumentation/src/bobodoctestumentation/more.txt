@@ -750,7 +750,7 @@ object you give to ``bobo_errors``.
     >>> app.get('/bad.html', status=500).body
     'Dang! bad() takes exactly 2 arguments (1 given)'
 
-.. _order:
+.. _orderl:
 
 Ordering Resources
 ------------------
