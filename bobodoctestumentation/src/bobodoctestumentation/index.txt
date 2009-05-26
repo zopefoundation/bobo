@@ -32,7 +32,7 @@ You can, of course, use `Easy Install
 <http://www.buildout.org>`_, or `pip <http://pip.openplans.org/>`_.
 
 To use the setup.py install command, download and unpack the `source
-distribution <http://pypi.python.org/bobo>`_ and run the setup
+distribution <http://pypi.python.org/pypi/bobo>`_ and run the setup
 script::
 
   python setup.py install
