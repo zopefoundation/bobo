@@ -37,6 +37,12 @@ script::
 
   python setup.py install
 
+To run bobo's tests, just use the etst command::
+
+  python setup.py test
+
+You can do this before or after installation.
+
 Bobo works with Python 2.4, 2.5, and 2.6.  Python 3.0 support is planned.
 Of course, when using Python 2.4 and 2.5, class decorator syntax can't
 be used. You can still use the decorators by calling them with a class
