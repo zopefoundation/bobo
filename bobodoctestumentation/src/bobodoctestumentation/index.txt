@@ -636,7 +636,7 @@ a request, the first one defined will be used [#order]_.)
             self.request = request
             self.id = employee_id
 
-        @bobo.bobo.resource('', 'PUT')
+        @bobo.resource('', 'PUT')
         def put(self, request):
             "Save employee data"
 
@@ -648,11 +648,11 @@ a request, the first one defined will be used [#order]_.)
         def get(self, request):
             "Get employee data"
 
-        @bobo.bobo.resource('/resume', 'PUT')
+        @bobo.resource('/resume', 'PUT')
         def save_resume(self, request):
             "Save employee data"
 
-        @bobo.bobo.query('/resume')
+        @bobo.query('/resume')
         def resume(self):
             "Save employee data"
 
@@ -680,8 +680,8 @@ define an application section using the bobo egg::
 
     [app:main]
     use = egg:bobo
-    bobo_resources = hellowapp
-    bobo_configure = helloapp:configure
+    bobo_resources = helloapp
+    bobo_configure = helloapp:config
     employees_database = /home/databases/employees.db
 
     [server:main]
