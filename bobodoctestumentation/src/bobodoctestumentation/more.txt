@@ -198,11 +198,11 @@ Then docs::
 
         @bobo.query('')
         def base(self, bobo_request):
-            return bobo.redirect(request.url+'/')
+            return bobo.redirect(bobo_request.url+'/')
 
         @bobo.query('/')
         def index(self):
-            return '\n'.join('<a href="%s/">%s<a><br>' % (k, k)
+            return '\n'.join('<a href="%s">%s<a><br>' % (k, k)
                              for k in self.data)
 
         @bobo.subroute('/:item_id')
