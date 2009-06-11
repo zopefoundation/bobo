@@ -765,3 +765,13 @@ See :ref:`wikiapaste` for a complete example.
 
 .. [#globalexpr] The name can be any Python expression that doesn't
    contain spaces. It will be evaluated using the module globals.
+
+Questions and bug reports
+=========================
+
+If you have questions, or want to discuss bobo, use the `bobo mailing
+list <http://groups.google.com/group/bobo-web>`_.  Send email to
+mailto:bobo-web@googlegroups.com.
+
+Report bugs using the `bobo bug tracker at Launchpad
+<https://bugs.launchpad.net/bobo>`_.
