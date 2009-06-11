@@ -232,8 +232,6 @@ Then docs::
     ...     src = src.replace("\n@bobo.scan_class", "")
     ...     src += "\nbobo.scan_class(Document)"
 
-
-
     >>> update_module('docs', src)
 
 We use the ``bobo_resources`` option to control the URLs we access these
@@ -373,6 +371,18 @@ This example shows a number of things:
          >> app.get(url6, status=200).body == expected6
          True
 
+.. check base and index
+
+    >>> url7 = 'http://localhost:8080/docs/bobs'
+    >>> url8 = 'http://localhost:8080/docs/bobs/'
+
+    >>> app.get(url7, status=302).headers['location']
+    'http://localhost:8080/docs/bobs/'
+    >>> print app.get(url8, status=200).body,
+    <a href="hi.html">hi.html<a><br>
+    <a href="hobbies">hobbies<a><br>
+
+
 Configuring routes in python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -421,6 +431,12 @@ function::
     True
     >>> app.get('http://localhost:8080/xxx.html', status=200).body == 'xxx'
     True
+
+    >>> app.get(url7, status=302).headers['location']
+    'http://localhost:8080/docs/bobs/'
+    >>> print app.get(url8, status=200).body,
+    <a href="hi.html">hi.html<a><br>
+    <a href="hobbies">hobbies<a><br>
 
 The ``resources`` function takes an iterable of resources, where the
 resources can be resource objects, or strings naming resource objects
@@ -492,6 +508,12 @@ resource by defining a ``bobo_response`` module attribute::
     >>> app.get(url6, status=200).body == expected6
     True
     >>> _ = app.get('http://localhost:8080/xxx', status=404)
+
+    >>> app.get(url7, status=302).headers['location']
+    'http://localhost:8080/docs/bobs/'
+    >>> print app.get(url8, status=200).body,
+    <a href="hi.html">hi.html<a><br>
+    <a href="hobbies">hobbies<a><br>
 
 Here, rather than adding a new resource to the module, we've copied the
 ``bobo_response`` method from a new resource to the module, making
