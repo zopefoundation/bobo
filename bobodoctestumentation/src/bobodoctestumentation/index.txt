@@ -566,6 +566,20 @@ instance. Let's look at the Folder class::
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
 
+    Test base: and index:
+
+    >>> app.get('http://localhost:8080/employees/1', status=302
+    ...         ).headers['location']
+    'http://localhost:8080/employees/1/'
+
+    >>> print app.get('http://localhost:8080/employees/1/', status=200).body,
+    <BLANKLINE>
+            id: 1
+            name: Bob
+            See my <a href="documents">documents</a>.
+    <BLANKLINE>
+
+
 The ``Folder`` and ``Document`` classes use the ``scan_class``
 decorator. The ``scan_class`` class decorator scans a class to make
 routes defined for it's methods available.  Using the ``scan_class``
@@ -622,6 +636,13 @@ You can specify one or more methods when using the ``resource``,
     def hello2(who='world'):
         return "Hello %s!" % who
 
+
+.. -> src
+
+    At least make sure the function defs execute:
+
+    >>> update_module('helloapp', src)
+
 If multiple resources (resource, query, or post) in a module or class
 have the same route strings, the resource used will be selected based
 on both the route and the methods allowed. (If multiple resources match
@@ -655,6 +676,15 @@ a request, the first one defined will be used [#order]_.)
         @bobo.query('/resume')
         def resume(self):
             "Save employee data"
+
+.. -> src
+
+    At least make sure the class def executes:
+
+    >>> if sys.version_info < (2, 6):
+    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
+
+    >>> update_module('helloapp', src)
 
 The ability to provide handlers for specific methods provides support
 for the `REST architectural style
