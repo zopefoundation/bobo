@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# General information about the project.
+project = u'bobo'
 version = '0.2'
+copyright = u'2009, Jim Fulton'
 
 #
 # bobo documentation build configuration file, created by
@@ -38,10 +41,6 @@ source_suffix = '.txt'
 
 # The master toctree document.
 master_doc = 'contents'
-
-# General information about the project.
-project = u'bobo'
-copyright = u'2009, Jim Fulton'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
