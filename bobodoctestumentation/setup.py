@@ -12,7 +12,7 @@
 #
 ##############################################################################
 name = 'bobodoctestumentation'
-version = '0'
+version = '0.0.0'
 
 long_description = """\
 The bobo documentation and tests are broken out into a separate project
