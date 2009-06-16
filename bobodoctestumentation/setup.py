@@ -14,11 +14,6 @@
 name = 'bobodoctestumentation'
 version = '0.0.0'
 
-long_description = """\
-The bobo documentation and tests are broken out into a separate project
-to keep the bobo distribution as small as possible.
-"""
-
 from setuptools import setup
 
 setup(
@@ -29,7 +24,7 @@ setup(
     description = "Bobo tests and documentation",
     license = "ZPL 2.1",
     url='http://www.python.org/pypi/'+name,
-    long_description=long_description,
+    long_description=open('README.txt').read(),
 
     packages = ['bobodoctestumentation'],
     package_dir = {'':'src'},
