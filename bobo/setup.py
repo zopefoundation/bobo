@@ -12,27 +12,7 @@
 #
 ##############################################################################
 name = 'bobo'
-version = '0'
-
-long_description = """
-Bobo is a light-weight framework for creating WSGI web applications.
-
-It's goal is to be easy to use and remember. You don't have to be a genius.
-
-It addresses 2 problems:
-
-- Mapping URLs to objects
-
-- Calling objects to generate HTTP responses
-
-Bobo doesn't have a templateing language, a database integration layer,
-or a number of other features that are better provided by WSGI
-middle-ware or application-specific libraries.
-
-Bobo builds on other frameworks, most notably WSGI and WebOb.
-
-To learn more. visit: http://bobo.digicool.com
-"""
+version = '0.0.0'
 
 entry_points = """
 [console_scripts]
@@ -66,12 +46,14 @@ setup(
     license = "ZPL 2.1",
     keywords = "WSGI",
     url='http://www.python.org/pypi/'+name,
-    long_description=long_description,
+    long_description=open('README.txt').read(),
 
     py_modules = ['bobo', 'boboserver'],
     package_dir = {'':'src'},
     install_requires = install_requires,
     entry_points = entry_points,
-    tests_require = ['bobodoctestumentation', 'webtest', 'zope.testing'],
+    tests_require = [
+        'bobodoctestumentation >=%s, <%s.999' % (version, version),
+        'webtest', 'zope.testing'],
     test_suite = 'bobodoctestumentation.tests.test_suite',
     )
