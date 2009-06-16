@@ -34,18 +34,17 @@ import traceback
 import types
 import webob
 
-if sys.version_info < (2, 5):
+def run_server(app, port):
+    wsgiref.simple_server.make_server('', port, app).serve_forever()
+
+if sys.version_info >= (2, 5):
+    import wsgiref.simple_server
+else:
     # can't use wsgiref, use paste
     import paste.httpserver
 
     def run_server(app, port):
         paste.httpserver.server_runner(app, {}, port=port)
-else:
-    import wsgiref.simple_server
-
-    def run_server(app, port):
-        wsgiref.simple_server.make_server('', port, app).serve_forever()
-
 
 class Directory:
 
