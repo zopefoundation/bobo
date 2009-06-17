@@ -11,7 +11,7 @@ It addresses 2 problems:
 
 - Calling objects to generate HTTP responses
 
-Bobo doesn't have a templateing language, a database integration layer,
+Bobo doesn't have a templating language, a database integration layer,
 or a number of other features that are better provided by WSGI
 middle-ware or application-specific libraries.
 

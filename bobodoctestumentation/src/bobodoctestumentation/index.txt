@@ -12,7 +12,7 @@ It provides 2 features:
 
 - Calling objects to generate HTTP responses
 
-It doesn't have a templateing language, a database integration layer,
+It doesn't have a templating language, a database integration layer,
 or a number of other features that can be provided by WSGI middle-ware
 or application-specific libraries.
 
