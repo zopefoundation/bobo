@@ -3,7 +3,7 @@ Bobo
 
 Bobo is a light-weight framework for creating WSGI web applications.
 
-It's goal is to be easy to use and remember. You don't have to be a genius.
+It's goal is to be easy to use and remember.
 
 It addresses 2 problems:
 
