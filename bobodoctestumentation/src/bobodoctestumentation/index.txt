@@ -725,7 +725,7 @@ In this example, we're using the HTTP `server that is built into Paste
 The application section (``app:main``) contains bobo options, as well
 as application-specific options.  In this example, we used the
 ``bobo_resources`` option to specify that we want to use resources
-found in the hellowapp module, and the ``bobo_configure`` option to
+found in the helloapp module, and the ``bobo_configure`` option to
 specify a configuration handler to be called with configuration data.
 
 You can put application-specific options in the application section,
