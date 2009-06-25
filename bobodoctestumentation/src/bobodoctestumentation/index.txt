@@ -140,6 +140,8 @@ given as form data::
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
+    >>> app.get(url, status=200).body == expected_body
+    True
 
 If a function accepts named arguments, then data will be
 supplied from form data.  If we visit::
