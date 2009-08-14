@@ -22,6 +22,12 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+0.2.2 (unreleased)
+------------------
+
+BugFix: boboserver.File must explicitly open files in binary mode, which is not
+the default on Windows.
+
 0.2.1 2009-06-16
 ----------------
 
