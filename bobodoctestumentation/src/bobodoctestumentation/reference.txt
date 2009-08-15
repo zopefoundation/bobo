@@ -240,7 +240,7 @@ Glossary
        <http://api.rubyonrails.org/classes/ActionController/Routing.html>`_
        system.
 
-       Placeholders are Python identifiers preceded by ":/".  If a
+       Placeholders are Python identifiers preceded by "/:".  If a
        placeholder is followed by a question mark, it is optional.  A
        placeholder may be followed by an extension.  When a route
        matches a URL, the URL text corresponding to the placeholders
