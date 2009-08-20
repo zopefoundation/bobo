@@ -691,6 +691,7 @@ a request, the first one defined will be used [#order]_.)
 The ability to provide handlers for specific methods provides support
 for the `REST architectural style
 <http://en.wikipedia.org/wiki/Representational_State_Transfer>`_.
+
 .. _configuration:
 
 Beyond the bobo development server
