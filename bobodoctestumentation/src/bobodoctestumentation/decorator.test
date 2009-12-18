@@ -208,10 +208,8 @@ We use resources by calling the result of calling bobo_response:
 
     >>> call_resource(hi, '/foo')
     request:
-    GET /foo
+    GET /foo HTTP/1.0
     Host: localhost:80
-    <BLANKLINE>
-    <BLANKLINE>
     -----
     BoboException:
     {'body': 'Hi None.',
@@ -228,10 +226,8 @@ order.
 
     >>> call_resource(hi, '/bar')
     request:
-    GET /bar
+    GET /bar HTTP/1.0
     Host: localhost:80
-    <BLANKLINE>
-    <BLANKLINE>
     -----
     BoboException:
     {'body': 'Hi bar.',
@@ -321,10 +317,8 @@ If a callable returns a response, then we don't get a bobo exception:
 
     >>> call_resource(hi, '/bar')
     request:
-    GET /bar
+    GET /bar HTTP/1.0
     Host: localhost:80
-    <BLANKLINE>
-    <BLANKLINE>
     -----
     200 OK
     Content-Length: 7
@@ -493,10 +487,8 @@ The subroute decorator is used with a factory that returns a resource.
     >>> call_resource(sub1, '/x/foo')
     sub1 x
     request:
-    GET /x/foo
+    GET /x/foo HTTP/1.0
     Host: localhost:80
-    <BLANKLINE>
-    <BLANKLINE>
     -----
     BoboException:
     {'body': 'Hi None.',

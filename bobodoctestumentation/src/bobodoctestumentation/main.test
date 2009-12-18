@@ -291,7 +291,7 @@ redirect
     >>> print response
     302 Found
     Location: http://www.python.org/
-    content-type: text/html; charset=UTF-8
+    Content-Type: text/html; charset=UTF-8
     Content-Length: 26
     <BLANKLINE>
     See http://www.python.org/
