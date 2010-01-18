@@ -524,6 +524,12 @@ def early():
     """
     return order() + _early_base
 
+class _cached_property(object):
+    def __init__(self, func):
+        self.func = func
+    def __get__(self, inst, class_):
+        return self.func(inst)
+
 _ext_re = re.compile('/(\w+)').search
 class _Handler:
 
@@ -554,29 +560,32 @@ class _Handler:
         if order_ is None:
             order_ = order()
         self.bobo_order = order_
-        self._bobo_handle()
-        self._match()
 
-    def _bobo_handle(self):
+    @_cached_property
+    def bobo_handle(self):
         func = original = self.bobo_original
         if self.params:
             func = _make_caller(func, self.params)
         func = _make_bobo_handle(func, original, self.check, self.content_type)
         self.__dict__['bobo_handle'] = func
+        return func
 
-    def _match(self):
+    @_cached_property
+    def match(self):
         route_data = _compile_route(self.bobo_route, self.partial)
         methods = self.bobo_methods
         if methods is None:
-            match = route_data
-        else:
-            def match(request, path, method):
-                data = route_data(request, path)
-                if data is not None:
-                    if method not in methods:
-                        raise MethodNotAllowed(methods)
-                    return data
+            return route_data
+
+        def match(request, path, method):
+            data = route_data(request, path)
+            if data is not None:
+                if method not in methods:
+                    raise MethodNotAllowed(methods)
+                return data
+
         self.__dict__['match'] = match
+        return match
 
     def bobo_response(self, *args):
         request, path, method = args[-3:]

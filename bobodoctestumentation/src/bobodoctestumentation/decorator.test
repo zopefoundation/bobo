@@ -829,3 +829,33 @@ subroute factory can return None
 
     >>> call_resource(Traverse, '/Traverse/x')
     Traverse
+
+check caching of handler setup
+------------------------------
+
+    >>> original_make_bobo_handle = bobo._make_bobo_handle
+    >>> def test_make_bobo_handle(*args):
+    ...     print '_make_bobo_handle', args[0].__name__
+    ...     return original_make_bobo_handle(*args)
+    >>> bobo._make_bobo_handle = test_make_bobo_handle
+
+    >>> original_compile_route = bobo._compile_route
+    >>> def test_compile_route(*args):
+    ...     print '_compile_route', args[0]
+    ...     return original_compile_route(*args)
+    >>> bobo._compile_route = test_compile_route
+
+    >>> @bobo.resource('/test_route')
+    ... def test_func(r):
+    ...     return 'hi'
+
+    >>> call_resource(test_func, '/test_route') # doctest: +ELLIPSIS
+    _compile_route /test_route
+    _make_bobo_handle test_func
+    BoboException:...
+
+    >>> call_resource(test_func, '/test_route') # doctest: +ELLIPSIS
+    BoboException:...
+
+    >>> bobo._make_bobo_handle = original_make_bobo_handle
+    >>> bobo._compile_route = original_compile_route
