@@ -25,8 +25,17 @@ Change History
 0.2.2 (unreleased)
 ------------------
 
-BugFix: boboserver.File must explicitly open files in binary mode, which is not
-the default on Windows.
+Bugs fixed:
+
+- An intended optmization to cache resource decorator computations
+  didn't work, making request handling slower than it should have
+  been.
+
+- URLs were sometimes treated as if they had extra slashes when
+  traversing subroutes.
+
+- boboserver.File must explicitly open files in binary mode, which is not
+  the default on Windows.
 
 0.2.1 2009-06-16
 ----------------
