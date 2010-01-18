@@ -53,7 +53,6 @@ setup(
     install_requires = install_requires,
     entry_points = entry_points,
     tests_require = [
-        'bobodoctestumentation >=%s, <%s.999' % (version, version),
-        'webtest', 'zope.testing'],
+        'bobodoctestumentation >=%s, <%s.999' % (version, version)],
     test_suite = 'bobodoctestumentation.tests.test_suite',
     )

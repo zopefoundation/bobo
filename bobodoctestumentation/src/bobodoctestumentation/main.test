@@ -288,13 +288,13 @@ redirect
     >>> response # doctest: +ELLIPSIS
     <Response at ... 302 Found>
 
-    >>> print response
-    302 Found
-    Location: http://www.python.org/
-    Content-Type: text/html; charset=UTF-8
-    Content-Length: 26
+    >>> print str(response).lower()
+    302 found
+    location: http://www.python.org/
+    content-type: text/html; charset=utf-8
+    content-length: 26
     <BLANKLINE>
-    See http://www.python.org/
+    see http://www.python.org/
 
     >>> response = bobo.redirect('http://www.python.org/', 301)
     >>> response # doctest: +ELLIPSIS

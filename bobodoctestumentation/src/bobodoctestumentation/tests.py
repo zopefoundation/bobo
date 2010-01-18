@@ -14,39 +14,13 @@
 
 from zope.testing import doctest, setupstack, renormalizing
 import bobo
-import manuel
+import manuel.capture
 import manuel.doctest
 import manuel.testing
-import pprint
 import re
 import sys
-import textwrap
 import types
 import unittest
-import webob
-
-def assignment_manuel():
-    assignment_re = re.compile(
-        r"[^\n]*::(?P<value>(\n| [^\n]*\n)+?)"
-        " *\.\. -> (?P<name>\w+)(?P<strip> +strip)? *\n")
-
-    m = manuel.Manuel()
-
-    @m.parser
-    def parse(document):
-        for region in document.find_regions(assignment_re):
-            data = region.start_match.groupdict()
-            data['value'] = textwrap.dedent(data['value'].expandtabs())
-            if data.get('strip'):
-                data['value'] = data['value'].strip()
-            source = "%(name)s = %(value)r\n" % data
-            example = doctest.Example(source, '', lineno=region.lineno-1)
-            document.replace_region(region, example)
-
-    m2 = manuel.doctest.Manuel()
-    m2.extend(m)
-
-    return m2
 
 def setUp(test):
     setupstack.setUpDirectory(test)
@@ -98,7 +72,7 @@ def get_port():
 def test_suite():
     return unittest.TestSuite((
         manuel.testing.TestSuite(
-            assignment_manuel(),
+            manuel.doctest.Manuel() + manuel.capture.Manuel(),
             'index.txt', 'more.txt',
             setUp=setup_intro),
         doctest.DocFileSuite(

@@ -173,7 +173,7 @@ route.  It also provides automation of response creation.
     ... @bobo.resource('/:name', content_type='text/plain; charset=Latin-1')
     ... def hi(request, name=None):
     ...     print 'request:'
-    ...     print str(request).replace('\r', '')
+    ...     print str(request).replace('\r', '').rstrip()
     ...     print '-----'
     ...     return 'Hi %s.' % name
 

@@ -280,7 +280,8 @@ This example shows a number of things:
 
        Hi, I'm employee 1
 
-     .. -> expected1 strip
+     .. -> expected1
+       >>> expected1 = expected1.strip()
 
          >>> app.get(url1, status=200).body == expected1
          True
@@ -291,13 +292,15 @@ This example shows a number of things:
 
        http://localhost:8080/docs/bobs/hi.html
 
-     .. -> url2 strip
+     .. -> url2
+       >>> url2 = url2.strip()
 
      We'll get output::
 
        Hi. I'm Bob.
 
-     .. -> expected2 strip
+     .. -> expected2
+       >>> expected2 = expected2.strip()
 
          >>> app.get(url2, status=200).body == expected2
          True
@@ -309,13 +312,15 @@ This example shows a number of things:
 
         http://localhost:8080/long/winded/path/bobo/lets/get/on/with/it
 
-     .. -> url3 strip
+     .. -> url3
+       >>> url3 = url3.strip()
 
      We'll get output::
 
        Hi, I'm bobo
 
-     .. -> expected3 strip
+     .. -> expected3
+       >>> expected3 = expected3.strip()
 
          >>> app.get(url3, status=200).body == expected3
          True
@@ -326,13 +331,15 @@ This example shows a number of things:
 
         http://localhost:8080/us/1/
 
-     .. -> url4 strip
+     .. -> url4
+       >>> url4 = url4.strip()
 
      We'll get output::
 
        Hi, I'm employee 1
 
-     .. -> expected4 strip
+     .. -> expected4
+       >>> expected4 = expected4.strip()
 
          >>> app.get(url4, status=200).body == expected4
          True
@@ -343,13 +350,15 @@ This example shows a number of things:
 
         http://localhost:8080/folks/employee/1/
 
-     .. -> url5 strip
+     .. -> url5
+       >>> url5 = url5.strip()
 
      We'll get output::
 
        Hi, I'm employee 1
 
-     .. -> expected5 strip
+     .. -> expected5
+       >>> expected5 = expected5.strip()
 
          >>> app.get(url5, status=200).body == expected5
          True
@@ -360,13 +369,15 @@ This example shows a number of things:
 
         http://localhost:8080/ho/silly
 
-     .. -> url6 strip
+     .. -> url6
+       >>> url6 = url6.strip()
 
      We'll get output::
 
        Hi, I'm silly
 
-     .. -> expected6 strip
+     .. -> expected6
+       >>> expected6 = expected6.strip()
 
          >> app.get(url6, status=200).body == expected6
          True
@@ -611,7 +622,8 @@ If we use the URL::
 
    http://localhost:8080/hi.html?who=you
 
-.. -> url1 strip
+.. -> url1
+  >>> url1 = url1.strip()
 
 We'll get the response::
 
@@ -619,7 +631,8 @@ We'll get the response::
     Content-Type: text/html; charset=UTF-8
     Hi you
 
-.. -> expected1 strip
+.. -> expected1
+  >>> expected1 = expected1.strip()
 
     >>> str(app.get(url1)).strip() == expected1
     True
@@ -628,7 +641,8 @@ But if we use::
 
    http://localhost:8080/ho
 
-.. -> url2 strip
+.. -> url2
+  >>> url2 = url2.strip()
 
 We'll get::
 
@@ -636,7 +650,8 @@ We'll get::
     Content-Type: text/html; charset=UTF-8
     not found
 
-.. -> expected2 strip
+.. -> expected2
+  >>> expected2 = expected2.strip()
 
     >>> str(app.get(url2, status=404)).strip() == expected2
     True
@@ -645,7 +660,8 @@ If we use::
 
    http://localhost:8080/hi.html
 
-.. -> url3 strip
+.. -> url3
+  >>> url3 = url3.strip()
 
 We'll get::
 
@@ -653,7 +669,8 @@ We'll get::
     Content-Type: text/html; charset=UTF-8
     Missing who
 
-.. -> expected3 strip
+.. -> expected3
+  >>> expected3 = expected3.strip()
 
     >>> str(app.get(url3)).strip() == expected3
     True
@@ -665,7 +682,8 @@ If we make a POST to the same URL, we'll get::
     Content-Type: text/plain
     bad method POST
 
-.. -> expected4 strip
+.. -> expected4
+  >>> expected4 = expected4.strip()
 
     >>> str(app.post(url3, 'who=me', status=405)).strip() == expected4
     True

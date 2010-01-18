@@ -87,13 +87,15 @@ visit::
 
     http://localhost:8080/hello.html
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 you'll get the greeting::
 
     Hello world!
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url, status=200).body == expected_body
     True
@@ -105,7 +107,8 @@ application so we can use a URL like::
 
     http://localhost:8080/
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 We'll do this by providing a URL path::
 
@@ -148,13 +151,15 @@ supplied from form data.  If we visit::
 
     http://localhost:8080/?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 We'll get the output::
 
    Hello Sally!
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url, status=200).body == expected_body
     True
@@ -290,13 +295,15 @@ Now, to access the resource, we use a URL like::
 
     http://localhost:8080/greeters/myapp?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 for which we get the output::
 
     Hello Sally! My name is myapp.
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url).body == expected_body
     True
@@ -326,13 +333,15 @@ we can use the URL::
 
     http://localhost:8080/greeters?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 for which we get the output::
 
     Hello Sally! My name is Bobo.
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url).body == expected_body
     True
@@ -341,13 +350,15 @@ Note, however, if we use the URL::
 
     http://localhost:8080/greeters/?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 we get the output::
 
     Hello Sally! My name is .
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url).body == expected_body
     True
@@ -369,13 +380,15 @@ the function, we use a URL like::
 
     http://localhost:8080/greeters/myapp.html?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 And get::
 
     Hello Sally! My name is myapp.
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url).body == expected_body
     True
@@ -395,7 +408,8 @@ Then we can use a URL like::
 
     http://localhost:8080/greeters?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
     >>> app.get(url, status=200).body
     'Hello Sally! My name is Bobo.'
@@ -404,7 +418,8 @@ or::
 
     http://localhost:8080/greeters/jim.html?name=Sally
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
     >>> app.get(url, status=200).body
     'Hello Sally! My name is jim.'
@@ -486,7 +501,8 @@ With this example, if we visit::
 
     http://localhost:8080/employees/1/summary.html
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
     >>> print app.get(url).body
     <BLANKLINE>
@@ -510,13 +526,15 @@ method will be called for a URL like::
 
     http://localhost:8080/employees/1
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 which would redirect to::
 
     http://localhost:8080/employees/1/
 
-.. -> expected_location strip
+.. -> expected_location
+  >>> expected_location = expected_location.strip()
 
     >>> response = app.get(url, status=302)
     >>> response.headers['location'] == expected_location
@@ -590,13 +608,15 @@ decorator is equivalent to using the ``scan`` keyword with
 
     http://localhost:8080/employees/1/documents/hobbies/sports.html
 
-.. -> url strip
+.. -> url
+  >>> url = url.strip()
 
 which outputs::
 
     I like to ski.
 
-.. -> expected_body strip
+.. -> expected_body
+  >>> expected_body = expected_body.strip()
 
     >>> app.get(url).body == expected_body
     True
