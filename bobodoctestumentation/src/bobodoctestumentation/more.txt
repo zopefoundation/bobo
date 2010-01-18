@@ -747,8 +747,8 @@ Uncaught exceptions
 
 Normally, bobo let's uncaught exceptions propagate to calling
 middleware or servers.  If you want to provide custom handling of
-uncaught exceptions, you can include an ``exceptions`` method in
-object you give to ``bobo_errors``.
+uncaught exceptions, you can include an ``exception`` method in
+the object you give to ``bobo_errors``.
 
 ::
 
