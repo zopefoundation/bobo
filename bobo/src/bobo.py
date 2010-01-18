@@ -946,8 +946,6 @@ def _compile_route(route, partial=False):
             if m is None:
                 return m
             path = path[len(m.group(0)):]
-            if path and not path.startswith('/'):
-                path = '/'+path
             return (dict(item for item in m.groupdict().iteritems()
                          if item[1] is not None),
                     path,
