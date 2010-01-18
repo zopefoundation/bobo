@@ -1289,5 +1289,6 @@ class MethodNotAllowed(Exception):
 class NotFound(Exception):
     """A resource cannot be found.
 
-    This exception can be raised by application code.
+    This exception can be conveniently raised by application
+    code. Bobo will catch it and generate a not-found response object.
     """
