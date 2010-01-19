@@ -580,7 +580,7 @@ instance. Let's look at the Folder class::
 .. -> src
 
     >>> if sys.version_info < (2, 6):
-    ...     src = src.replace("\n@bobo.scan_class", "")
+    ...     src = src.replace("@bobo.scan_class", "")
     ...     src += "\nbobo.scan_class(Folder)\nbobo.scan_class(Document)"
 
     >>> update_module('helloapp', src)
@@ -704,7 +704,7 @@ a request, the first one defined will be used [#order]_.)
     At least make sure the class def executes:
 
     >>> if sys.version_info < (2, 6):
-    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
+    ...     src = src.replace("@bobo.subroute", "\n#bobo.subroute")
 
     >>> update_module('helloapp', src)
 

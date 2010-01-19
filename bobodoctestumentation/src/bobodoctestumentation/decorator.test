@@ -866,8 +866,7 @@ check caching of handler setup
 check we don't match within path segment prefixes
 -------------------------------------------------
 
-    >>> @bobo.subroute('/events', scan=True)
-    ... class Events:
+    >>> class Events:
     ...
     ...    def __init__(self, request): pass
     ...
@@ -879,6 +878,8 @@ check we don't match within path segment prefixes
     ...    def event_page(self, request, id):
     ...        self.id = id
     ...        return self
+
+    >>> Events = bobo.subroute('/events', scan=True)(Events)
 
     >>> call_resource(Events, '/eventswaaa')
     >>> call_resource(Events, '/events/1')
