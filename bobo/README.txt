@@ -22,8 +22,8 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
-0.2.2 (unreleased)
-------------------
+0.2.2 2010-01-19
+----------------
 
 Bugs fixed:
 
