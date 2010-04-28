@@ -199,8 +199,8 @@ started.
     <html>
             <head><title></title></head>
             <body>
-              <a href="doc1.txt">doc1.txt</a><br>
-      <a href="subdir/">subdir/</a>
+              <a href="subdir/">subdir/</a><br>
+      <a href="doc1.txt">doc1.txt</a>
             </body>
             </html>
     <BLANKLINE>

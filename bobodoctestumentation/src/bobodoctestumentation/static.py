@@ -13,7 +13,7 @@ class Directory:
     @bobo.query('/')
     def index(self):
         links = []
-        for name in os.listdir(self.path):
+        for name in sorted(os.listdir(self.path)):
             if os.path.isdir(os.path.join(self.path, name)):
                 name += '/'
             links.append('<a href="%s">%s</a>' % (name, name))
