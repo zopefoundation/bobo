@@ -59,7 +59,7 @@ class Directory:
     @bobo.query('/')
     def index(self):
         links = []
-        for name in os.listdir(self.path):
+        for name in sorted(os.listdir(self.path)):
             if os.path.isdir(os.path.join(self.path, name)):
                 name += '/'
             links.append('<a href="%s">%s</a>' % (name, name))
@@ -69,7 +69,7 @@ class Directory:
           %s
         </body>
         </html>
-        """ % (self.path[len(self.root):], '<br>\n  '.join(links))
+        """ % (self.path[len(self.root):], '<br>\n          '.join(links))
 
     @bobo.subroute('/:name')
     def traverse(self, request, name):
