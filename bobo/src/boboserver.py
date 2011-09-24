@@ -34,6 +34,8 @@ import traceback
 import types
 import webob
 
+mimetypes.init()
+
 def run_server(app, port):
     wsgiref.simple_server.make_server('', port, app).serve_forever()
 
