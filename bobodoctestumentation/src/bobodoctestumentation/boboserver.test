@@ -1,7 +1,7 @@
 Bobo server and middleware tests
 ================================
 
-These are fairly whote box tests, in that we mock up the environmeny
+These are fairly whole box tests, in that we mock up the environment
 of the components being tested pretty extensively.
 
 We'll start by creating a source file:
