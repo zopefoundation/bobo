@@ -242,6 +242,15 @@ started.
     <body>Could not find: /resources/../../</body>
     </html>
 
+The path included in the body is sanitized.
+
+    >>> print app.get('/<b>hi</b>', status=404).body
+    <html>
+    <head><title>Not Found</title></head>
+    <body>Could not find: /%3Cb%3Ehi%3C/b%3E</body>
+    </html>
+    <BLANKLINE>
+
 Cleanup:
 
     >>> restore_server()

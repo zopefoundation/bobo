@@ -22,6 +22,14 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+0.2.3 2012-03-12
+----------------
+
+Bugs fixed:
+
+- Sanitize the request path included in the message on the default
+  404 page.
+
 0.2.2 2010-01-19
 ----------------
 

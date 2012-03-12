@@ -36,6 +36,7 @@ __metaclass__ = type
 
 import re
 import sys
+import urllib
 import webob
 
 bbbbad_errors = KeyboardInterrupt, SystemExit, MemoryError
@@ -265,7 +266,8 @@ class Application:
 
     def not_found(self, request, method):
         return _err_response(
-            404, method, "Not Found", "Could not find: "+request.path_info)
+            404, method, "Not Found",
+            "Could not find: "+ urllib.quote(request.path_info))
 
     def missing_form_variable(self, request, method, name):
         return _err_response(
