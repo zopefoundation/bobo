@@ -22,6 +22,13 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+1.0.0 2012-04-29
+----------------
+
+- Minimum supported Python version is 2.6.
+
+- Updated to work with webob 1.2
+
 0.2.3 2012-03-12
 ----------------
 
