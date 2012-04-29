@@ -147,7 +147,7 @@ called to produce resources.
     <BLANKLINE>
 
     >>> print app.get('/there/x/y/z', status=200).body
-    {'where': 'there'}
+    {'where': u'there'}
 
 Note classes that define bobo_response instance methods aren't
 found via module scanning:

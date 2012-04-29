@@ -102,7 +102,7 @@ File-system wiki with authentication and (minimal) authorization
     Response: 302 Found
     Content-Type: text/html; charset=UTF-8
     Location: http://localhost/front
-    Set-Cookie: wiki=; expires="..."; Max-Age=0; Path=/
+    Set-Cookie: wiki=; Max-Age=0; Path=/; expires=...
     See http://localhost/front
 
     >>> app = webtest.TestApp(boboapp)

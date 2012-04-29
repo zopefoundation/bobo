@@ -59,11 +59,11 @@ Some things to note:
     {}
     >>> test('', '/')
     >>> test('', '/', partial=True)
-    '/'
+    u'/'
     {}
     >>> test('/', '/foo')
     >>> test('/', '/foo', partial=True)
-    'foo'
+    u'foo'
     {}
     >>> test('/foo', '/foo')
     {}
@@ -72,99 +72,99 @@ Some things to note:
     {}
     >>> test('/foo/', '/foo/bar')
     >>> test('/foo/', '/foo/bar', '/bar')
-    'bar'
+    u'bar'
     {}
     >>> test('/foo', '/foo/bar', '/bar')
-    '/bar'
+    u'/bar'
     {}
     {}
     >>> test('/:x', '')
     >>> test('/:x', '/')
-    {'x': ''}
+    {'x': u''}
     >>> test('/:x', '/a')
-    {'x': 'a'}
+    {'x': u'a'}
     >>> test('/:x', '/aa')
-    {'x': 'aa'}
+    {'x': u'aa'}
     >>> test('/:xx', '')
     >>> test('/:xx', '/')
-    {'xx': ''}
+    {'xx': u''}
     >>> test('/:xx', '/a')
-    {'xx': 'a'}
+    {'xx': u'a'}
     >>> test('/:xx', '/aa')
-    {'xx': 'aa'}
+    {'xx': u'aa'}
     >>> test('/zzz/:xx', '/zzz')
     >>> test('/zzz/:xx', '/zzz/')
-    {'xx': ''}
+    {'xx': u''}
     >>> test('/zzz/:xx', '/zzz/a')
-    {'xx': 'a'}
+    {'xx': u'a'}
     >>> test('/zzz/:xx', '/zzz/aa')
-    {'xx': 'aa'}
+    {'xx': u'aa'}
     >>> test('/:xx/:y', '/a')
     >>> test('/:xx/:y', '/a/')
-    {'xx': 'a',
-     'y': ''}
+    {'xx': u'a',
+     'y': u''}
     >>> test('/:xx/:y', '/a/b')
-    {'xx': 'a',
-     'y': 'b'}
+    {'xx': u'a',
+     'y': u'b'}
     >>> test('/zzz/:xx/www/:y', '/a/b')
     >>> test('/zzz/:xx/www/:y', '/zzz/aa/www/bb')
-    {'xx': 'aa',
-     'y': 'bb'}
+    {'xx': u'aa',
+     'y': u'bb'}
     >>> test('/zzz/:xx/www/:y.html', '/zzz/aa/www/bb.html')
-    {'xx': 'aa',
-     'y': 'bb'}
+    {'xx': u'aa',
+     'y': u'bb'}
     >>> test('/zzz/:xx/www/:yy.html', '/zzz/aa/www/b.html')
-    {'xx': 'aa',
-     'yy': 'b'}
+    {'xx': u'aa',
+     'yy': u'b'}
     >>> test('/zzz/:xx?/www/:yy.html', '/zzz/aa/www/b.html')
-    {'xx': 'aa',
-     'yy': 'b'}
+    {'xx': u'aa',
+     'yy': u'b'}
     >>> test('/zzz/:xx?/www/:yy.html', '/zzz/www/b.html')
-    {'yy': 'b'}
+    {'yy': u'b'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/qq/www')
-    {'xx': 'qq'}
+    {'xx': u'qq'}
     >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www')
     {}
     >>> test('/zzz/:xx?/:yy?.html', '/zzz')
     {}
     >>> test('/zzz/:xx?/:yy?.html', '/zzz/')
-    {'xx': ''}
+    {'xx': u''}
     >>> test('/zzz/:xx?/:yy?', '/zzz')
     {}
     >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www/')
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www')
-    {'xx': 'aaa'}
+    {'xx': u'aaa'}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/')
-    {'xx': 'aaa',
-     'yy': ''}
+    {'xx': u'aaa',
+     'yy': u''}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc')
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/ccc')
-    '/ccc'
-    {'xx': 'aaa',
-     'yy': 'bbb'}
+    u'/ccc'
+    {'xx': u'aaa',
+     'yy': u'bbb'}
     {}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo')
-    '/ccc'
-    {'xx': 'aaa',
-     'yy': 'bbb'}
-    {'foo': 'ccc'}
+    u'/ccc'
+    {'xx': u'aaa',
+     'yy': u'bbb'}
+    {'foo': u'ccc'}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo/:bar?')
-    '/ccc'
-    {'xx': 'aaa',
-     'yy': 'bbb'}
-    {'foo': 'ccc'}
+    u'/ccc'
+    {'xx': u'aaa',
+     'yy': u'bbb'}
+    {'foo': u'ccc'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc')
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc', '/ccc')
-    '/bbb/ccc'
-    {'xx': 'aaa'}
+    u'/bbb/ccc'
+    {'xx': u'aaa'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/ccc')
-    '/ccc'
-    {'xx': 'aaa'}
+    u'/ccc'
+    {'xx': u'aaa'}
     {}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/:ccc')
-    '/ccc'
-    {'xx': 'aaa'}
-    {'ccc': 'ccc'}
+    u'/ccc'
+    {'xx': u'aaa'}
+    {'ccc': u'ccc'}
 
 resource
 --------
@@ -233,7 +233,7 @@ order.
     Host: localhost:80
     -----
     BoboException:
-    {'body': 'Hi bar.',
+    {'body': u'Hi bar.',
      'content_type': 'text/plain; charset=Latin-1',
      'headers': [],
      'status': 200}
@@ -341,14 +341,14 @@ request query and/or post data as function parameters.
 
     >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3')
     BoboException:
-    {'body': 'Request b 3 None',
+    {'body': u'Request b 3 None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3')
     BoboException:
-    {'body': 'Request 2 3 None',
+    {'body': u'Request 2 3 None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -361,7 +361,7 @@ The query decorators will also use form data:
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5')
     BoboException:
-    {'body': "Request 2 ['3', '4'] 5",
+    {'body': u"Request 2 [u'3', u'4'] 5",
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -381,14 +381,14 @@ The post decorator will *only* use form data:
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
     BoboException:
-    {'body': 'Request 6 4 5',
+    {'body': u'Request 6 4 5',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
     BoboException:
-    {'body': 'Request b 4 5',
+    {'body': u'Request b 4 5',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -436,7 +436,7 @@ If a resource is defined in a class, it handles binding correctly.
 
     >>> call_resource(C().m1, '/a/b')
     BoboException:
-    {'body': 'Request 99 b',
+    {'body': u'Request 99 b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -462,7 +462,7 @@ If a resource is defined in a class, it handles binding correctly.
 
     >>> call_resource(C().m2, '/b/b?z=3')
     BoboException:
-    {'body': '99 b 3',
+    {'body': u'99 b 3',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -516,7 +516,7 @@ give it one:
     True
     >>> call_resource(C, '/x/a/b')
     BoboException:
-    {'body': 'Request 99 b',
+    {'body': u'Request 99 b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -542,14 +542,14 @@ subroute.
 
     >>> call_resource(C, '/pre/a/b')
     BoboException:
-    {'body': 'Request pre b',
+    {'body': u'Request pre b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pro/b/c?z=1')
     BoboException:
-    {'body': 'pro c 1',
+    {'body': u'pro c 1',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -581,14 +581,14 @@ Scanning classes with duplicate routes
 
     >>> call_resource(C, '/pre')
     BoboException:
-    {'body': 'B.get GET pre None',
+    {'body': u'B.get GET pre None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre', method='POST')
     BoboException:
-    {'body': 'C.post POST pre None',
+    {'body': u'C.post POST pre None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -600,14 +600,14 @@ Scanning classes with duplicate routes
 
     >>> call_resource(C, '/pre/a')
     BoboException:
-    {'body': 'B.gety GET pre a',
+    {'body': u'B.gety GET pre a',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre/a', method='POST')
     BoboException:
-    {'body': 'C.posty POST pre a',
+    {'body': u'C.posty POST pre a',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -884,7 +884,7 @@ check we don't match within path segment prefixes
     >>> call_resource(Events, '/eventswaaa')
     >>> call_resource(Events, '/events/1')
     BoboException:
-    {'body': 'id 1',
+    {'body': u'id 1',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}

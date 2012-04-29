@@ -29,5 +29,5 @@ setup(
     packages = ['bobodoctestumentation'],
     package_dir = {'':'src'},
     package_data = {'bobodoctestumentation': ['*.txt', '*.test', '*.html']},
-    install_requires = ['manuel', 'simplejson', 'webtest', 'zope.testing'],
+    install_requires = ['manuel', 'webtest', 'zope.testing'],
     )

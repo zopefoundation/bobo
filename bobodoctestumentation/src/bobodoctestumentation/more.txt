@@ -40,7 +40,7 @@ authorization::
 
     >>> import pprint
     >>> pprint.pprint(helloapp.data, width=1)
-    {'foo': u'sometext',
+    {u'foo': u'sometext',
      'x': 'some text'}
 
 In this example, we use a very simple authorization model.  We can

@@ -240,8 +240,8 @@ class Application:
 
         content_type = data.content_type
         response = webob.Response(status=data.status,
-                                  headerlist=data.headers,
-                                  content_type=content_type)
+                                  headerlist=data.headers)
+        response.content_type = content_type
 
         if method == 'HEAD':
             return response
@@ -250,12 +250,7 @@ class Application:
         if isinstance(body, str):
             response.body = body
         elif _json_content_type(content_type):
-            try:
-                import json
-            except ImportError:
-                import simplejson
-                sys.modules['json'] = simplejson
-                json = simplejson
+            import json
             response.body = json.dumps(body)
         elif isinstance(body, unicode):
             response.unicode_body = body

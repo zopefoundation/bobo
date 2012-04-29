@@ -34,10 +34,10 @@ Sample ajax application
 
     >>> print app.get('/add.json?value=0&input=42')
     Response: 200 OK
-    Content-Type: application/json
+    Content-Type: application/json; charset=UTF-8
     {"value": 42}
 
     >>> print app.get('/sub.json?value=42&input=42')
     Response: 200 OK
-    Content-Type: application/json
+    Content-Type: application/json; charset=UTF-8
     {"value": 0}
