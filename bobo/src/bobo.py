@@ -34,10 +34,13 @@ __all__ = (
 
 __metaclass__ = type
 
+import logging
 import re
 import sys
 import urllib
 import webob
+
+log = logging.getLogger(__name__)
 
 bbbbad_errors = KeyboardInterrupt, SystemExit, MemoryError
 
@@ -204,7 +207,7 @@ class Application:
         except bbbbad_errors:
             raise
         except Exception:
-            if not hasattr(self, 'exception'):
+            if request.environ.get("x-wsgiorg.throw_errors"):
                 raise
             return self.exception(request, method, sys.exc_info())
 
@@ -279,6 +282,13 @@ class Application:
             405, method,
             "Method Not Allowed", "Invalid request method: %s" % method,
             [('Allow', ', '.join(sorted(methods)))])
+
+    def exception(self, request, method, exc_info):
+        log.exception(request.url)
+        return _err_response(
+            500, method,
+            "Internal Server Error", "An error occurred.")
+
 
 def _err_response(status, method, title, message, headers=()):
     response = webob.Response(status=status, headerlist=headers or [])

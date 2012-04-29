@@ -534,7 +534,7 @@ objects directly.
 Error response generation
 -------------------------
 
-There are three cases for which bobo has to generate error responses:
+There are four cases for which bobo has to generate error responses:
 
 1. When a resource can't be found, bobo generates a "404 Not Found"
    response.
@@ -544,6 +544,9 @@ There are three cases for which bobo has to generate error responses:
    parameter and the parameter is isn't in the given form data, bobo
    generates a "403 Forbidden" response with a body that indicates the
    missing parameter.
+4. When a route handler raises an exception, bobo generates a
+   "500 Internal Server Error" response.
+
 
 For each of these responses, bobo generates a small HTML body.
 
@@ -738,10 +741,13 @@ use an expression to specify the errors object.
 Uncaught exceptions
 ~~~~~~~~~~~~~~~~~~~
 
-Normally, bobo let's uncaught exceptions propagate to calling
-middleware or servers.  If you want to provide custom handling of
-uncaught exceptions, you can include an ``exception`` method in
-the object you give to ``bobo_errors``.
+Normally, bobo does not let uncaught exceptions propagate; however,
+if the `x-wsgiorg.throw_errors` key is present in the environment,
+any uncaught exceptions will be raised.
+
+If you want to provide custom handling of uncaught exceptions,
+you can include an ``exception`` method in the object you
+give to ``bobo_errors``.
 
 ::
 
@@ -773,7 +779,28 @@ the object you give to ``bobo_errors``.
     >>> update_module('badapp',
     ...   'import bobo\n\n@bobo.resource\ndef bad(x, y):\n  pass\n')
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='badapp'))
-    >>> app.get('/bad.html')
+    >>> print app.get('/bad.html', status=500).body
+    <html>
+    <head><title>Internal Server Error</title></head>
+    <body>An error occurred.</body>
+    </html>
+    <BLANKLINE>
+
+   The default exception handler logs the traceback.
+
+    >>> import logging
+    >>> import sys
+    >>> handler = logging.StreamHandler(sys.stdout)
+    >>> bobo.log.addHandler(handler)
+    >>> app.get('/bad.html', status=500) and None # doctest: +ELLIPSIS
+    http://localhost/bad.html
+    Traceback (most recent call last):
+    ...
+    TypeError: bad() takes exactly 2 arguments (1 given)
+
+    >>> bobo.log.removeHandler(handler)
+
+    >>> app.get("/bad.html", extra_environ={"x-wsgiorg.throw_errors": "1"})
     Traceback (most recent call last):
     ...
     TypeError: bad() takes exactly 2 arguments (1 given)

@@ -138,7 +138,7 @@ Let's publish a module with an error:
     Serving ['foo', 'bobo__main__'] on port 80...
     serve_forever '' 80
 
-    >>> try: req('/x')
+    >>> try: req('/x', environ={"x-wsgiorg.throw_errors": "1"})
     ... except Exception, v: print 'raised', v
     ... else: print '???'
     ... # doctest: +ELLIPSIS
