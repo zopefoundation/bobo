@@ -183,18 +183,23 @@ class Application:
 
     def bobo_response(self, request, path, method):
         try:
+            allowed = set()
             for handler in self.handlers:
-                response = handler(request, path, method)
+                try:
+                    response = handler(request, path, method)
+                except MethodNotAllowed, exc:
+                    allowed.update(exc.allowed)
+                    continue
                 if response is not None:
                     return response
+            if allowed:
+                return self.method_not_allowed(request, method, allowed)
             return self.not_found(request, method)
         except BoboException, exc:
             return self.build_response(request, method, exc)
-        except MethodNotAllowed, v:
-            return self.method_not_allowed(request, method, v.allowed)
         except MissingFormVariable, v:
             return self.missing_form_variable(request, method, v.name)
-        except NotFound, v:
+        except NotFound:
             return self.not_found(request, method)
         except bbbbad_errors:
             raise
@@ -1232,10 +1237,17 @@ def scan_class(class_):
         handlers.append(_make_br_method_for_name(name))
 
     def bobo_response(self, request, path, method):
+        allowed = set()
         for handler in handlers:
-            found = handler(self, request, path, method)
+            try:
+                found = handler(self, request, path, method)
+            except MethodNotAllowed, exc:
+                allowed.update(exc.allowed)
+                continue
             if found is not None:
                 return found
+        if allowed:
+            raise MethodNotAllowed(allowed)
 
     old = class_.__dict__.get('bobo_response')
     if isinstance(old, _subroute_class_method):

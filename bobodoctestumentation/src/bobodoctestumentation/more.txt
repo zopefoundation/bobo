@@ -549,7 +549,7 @@ There are three cases for which bobo has to generate error responses:
    method, bobo generates a "405 Method Not Allowed" response.
 3. When a ``query`` or ``post`` decorated function requires a
    parameter and the parameter is isn't in the given form data, bobo
-   generates a "405 Forbidden" response with a body that indicates the
+   generates a "403 Forbidden" response with a body that indicates the
    missing parameter.
 
 For each of these responses, bobo generates a small HTML body.
@@ -810,3 +810,105 @@ match a path, the first one defined will be used.
    :term:`resource` implementations.  Custom resource implementations
    must implement the resource interface and will provide an order
    using the ``bobo_order`` attribute.  See :ref:`resourceinterface`.
+
+
+Backtracking
+------------
+
+When handling a request, if bobo finds a resource that matches
+the route but does not accept the request method, it will continue
+looking for matching resources; if it eventually finds none, it will
+then generate a "405 Method Not Allowed" response.
+
+::
+
+   import bobo
+
+   @bobo.post("/event/create")
+   def create(bobo_request):
+       return "created event"
+
+   @bobo.resource("/event/:action?", method=("GET",))
+   def catch_all(bobo_request, action=None):
+       return "get request for %r" % (action,)
+
+   class User(object):
+
+       @bobo.resource("/:userid", method=("POST",))
+       def create(self, bobo_request, userid):
+           return "created user with id %r" % (userid,)
+
+       @bobo.resource("/:identifier", method=("HEAD",))
+       def head(self, bobo_request, identifier):
+           return ""
+
+       @bobo.resource("/:id", method=("GET",))
+       def catch_all(self, bobo_request, id):
+           return "get user with id %r" % (id,)
+
+   bobo.scan_class(User)
+
+   class Thing(object):
+
+       @bobo.resource("/:id", method=("PUT",))
+       def put(self, bobo_request, id):
+           return "put thing with id %r" % (id,)
+   bobo.scan_class(Thing)
+
+   @bobo.subroute("/users")
+   def users(bobo_request):
+       return User()
+
+   @bobo.subroute("/:thing")
+   def thing(bobo_request, thing):
+       return Thing()
+
+
+.. -> src
+
+    >>> update_module('backtrack', src)
+    >>> app = webtest.TestApp(bobo.Application(
+    ...    bobo_resources='backtrack'))
+
+We have a resource that matches the route "/event/create", but it is
+for POST requests.  If we make a GET request, the second resource
+with the matching route that can handle GET requests gets called.
+
+    >>> app.get('/event/create').body
+    "get request for u'create'"
+
+Of course POST requests go to the appropriate resource.
+
+    >>> app.post('/event/create').body
+    'created event'
+
+If we perform a HEAD request for "/event/create", we get a 405 response,
+as no resource is able to handle the method.  The "Allow" header indicates
+all of the request methods that are valid for the particular path.
+
+    >>> app.head('/event/create', status=405).headers["Allow"]
+    'GET, POST, PUT'
+
+The backtracking behavior works with subroutes.
+
+    >>> app.get('/users/1234').body
+    "get user with id u'1234'"
+
+    >>> app.head('/users/1234').status
+    '200 OK'
+
+    >>> app.post('/users/1234').body
+    "created user with id u'1234'"
+
+If the first matching subroute returns a resource with no handlers for
+the request method, the next matching subroute is tried.
+
+    >>> app.put('/users/54321').body
+    "put thing with id u'54321'"
+
+If no resource is able to handle the request method, we get a 405 response
+with an Allow header.
+
+    >>> app.request('/users/54321',
+    ...     method="OPTIONS", status=405).headers["Allow"]
+    'GET, HEAD, POST, PUT'

@@ -29,6 +29,10 @@ Change History
 
 - Updated to work with webob 1.2
 
+- Added backtracking when searching for resources to deal with a case
+  when a route doesn't handle a request method, but a later-matching
+  route does.
+
 0.2.3 2012-03-12
 ----------------
 
