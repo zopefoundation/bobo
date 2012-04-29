@@ -311,11 +311,6 @@ traversal
   The ``Directory.traverse`` method enables directories to be
   traversed with a name to get to sub-directories or files.
 
-non-decorator syntax
-  We call :func:`scan_class` on the ``Directory`` and ``File`` classes
-  rather than using ``scan_class`` as a decorator so we can use the
-  application with Python 2.4 and Python 2.5.
-
 use of the :class:`bobo.NotFound` exception
   Rather than construct a not-found ourselves, we simply raise
   bobo.NotFound, and let bobo generate the response for us.

@@ -579,10 +579,6 @@ instance. Let's look at the Folder class::
 
 .. -> src
 
-    >>> if sys.version_info < (2, 6):
-    ...     src = src.replace("@bobo.scan_class", "")
-    ...     src += "\nbobo.scan_class(Folder)\nbobo.scan_class(Document)"
-
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
 

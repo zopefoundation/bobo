@@ -225,13 +225,6 @@ Then docs::
 
 .. -> src
 
-    >>> import sys
-    >>> if sys.version_info < (2, 6):
-    ...     src = src.replace("\n@bobo.subroute", "\n#bobo.subroute")
-    ...     src += "\nFolder = bobo.subroute('/docs', scan=True)(Folder)"
-    ...     src = src.replace("\n@bobo.scan_class", "")
-    ...     src += "\nbobo.scan_class(Document)"
-
     >>> update_module('docs', src)
 
 We use the ``bobo_resources`` option to control the URLs we access these
@@ -832,6 +825,7 @@ then generate a "405 Method Not Allowed" response.
    def catch_all(bobo_request, action=None):
        return "get request for %r" % (action,)
 
+   @bobo.scan_class
    class User(object):
 
        @bobo.resource("/:userid", method=("POST",))
@@ -846,14 +840,12 @@ then generate a "405 Method Not Allowed" response.
        def catch_all(self, bobo_request, id):
            return "get user with id %r" % (id,)
 
-   bobo.scan_class(User)
-
+   @bobo.scan_class
    class Thing(object):
 
        @bobo.resource("/:id", method=("PUT",))
        def put(self, bobo_request, id):
            return "put thing with id %r" % (id,)
-   bobo.scan_class(Thing)
 
    @bobo.subroute("/users")
    def users(bobo_request):

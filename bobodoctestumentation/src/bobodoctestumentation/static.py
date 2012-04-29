@@ -1,5 +1,6 @@
 import bobo, mimetypes, os, webob
 
+@bobo.scan_class
 class Directory:
 
     def __init__(self, root, path=None):
@@ -35,8 +36,7 @@ class Directory:
         else:
             return File(path)
 
-bobo.scan_class(Directory)
-
+@bobo.scan_class
 class File:
     def __init__(self, path):
         self.path = path
@@ -53,5 +53,3 @@ class File:
             raise bobo.NotFound
 
         return response
-
-bobo.scan_class(File)
