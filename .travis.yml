@@ -7,5 +7,4 @@ python:
 install:
   - python$TRAVIS_PYTHON_VERSION bootstrap-py3k.py -d
   - bin/buildout
- script:
-  - ./bin/test
+script: ./bin/test
