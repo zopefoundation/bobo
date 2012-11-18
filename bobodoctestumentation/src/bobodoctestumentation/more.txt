@@ -831,6 +831,73 @@ match a path, the first one defined will be used.
    must implement the resource interface and will provide an order
    using the ``bobo_order`` attribute.  See :ref:`resourceinterface`.
 
+Additional Helpers
+------------------
+
+In addition to `query` and `post`, bobo provides route decorators for
+handling specific HTTP methods.  We'll construct a simple RESTful app
+to demonstrate.
+
+::
+   
+   import bobo
+   import webob
+   
+   items = {}
+
+   @bobo.get("/item/:id")
+   def _get(bobo_request, id):
+      if id in items:
+         data, ct = items[id]
+         return webob.Response(body=data, content_type=ct)
+      raise bobo.NotFound
+   
+   @bobo.head("/item/:id")
+   def _head(bobo_request, id):
+      res = _get(bobo_request, id)
+      res.body = ""
+      return res
+
+   @bobo.put("/item/:id")
+   def _put(bobo_request, id):
+      items[id] = (bobo_request.body, bobo_request.content_type)
+      return webob.Response(status=201)
+
+   @bobo.options("/item/:id")
+   def _options(bobo_request, id):
+      _get(bobo_request, id)
+      return "options"
+
+   @bobo.delete("/item/:id")
+   def _delete(bobo_request, id):
+      items.pop(id, None)
+      return "delete"
+
+.. -> src
+
+   >>> update_module('verbsample', src)
+   >>> app = webtest.TestApp(bobo.Application(bobo_resources="verbsample"))
+   >>> print app.put("/item/1", "yaddayadda", content_type="text/plain").status
+   201 Created
+
+   >>> print app.get("/item/1")
+   Response: 200 OK
+   Content-Type: text/plain; charset=UTF-8
+   yaddayadda
+
+   >>> print app.request("/item/1", method="HEAD")
+   Response: 200 OK
+   Content-Type: text/plain; charset=UTF-8
+   <BLANKLINE>
+
+   >>> print app.request("/item/1", method="OPTIONS").status
+   200 OK
+   
+   >>> print app.delete("/item/1").status
+   200 OK
+   
+   >>> print app.get("/item/1", status=404).status
+   404 Not Found
 
 Backtracking
 ------------

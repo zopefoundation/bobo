@@ -22,12 +22,20 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+1.1.0 unreleased
+----------------
+
+- Add decorators to define resource handlers for additional HTTP methods
+  (`put`, `get`, `head`, `delete`, `options`).
+- With the addition of `bobo.put`, `bobo.post` was changed to no longer
+  handle PUT requests.
+
 1.0.0 2012-04-29
 ----------------
 
 - Minimum supported Python version is 2.6.
 
-- Updated to work with webob 1.2
+- Updated to work with WebOb 1.2
 
 - Added backtracking when searching for resources to deal with a case
   when a route doesn't handle a request method, but a later-matching

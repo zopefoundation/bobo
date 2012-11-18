@@ -168,7 +168,7 @@ The ``query`` decorator will accept ``GET``, ``POST`` and ``HEAD``
 requests. It's appropriate when server data aren't modified.  To
 accept form data and modify data on a server, you should use the ``post``
 decorator. The ``post`` decorator works like the ``query`` decorator
-accept that it only allows ``POST`` and ``PUT`` requests and won't pass data
+except that it only allows ``POST`` requests and won't pass data
 provided in a query string as function arguments.
 
 ::
@@ -177,14 +177,18 @@ provided in a query string as function arguments.
     def hello(name="world"):
         return "Hello %s!" % name
 
+    @bobo.put('/')
+    def put_hello(name="world"):
+        return "Hello %s?" % name
+
 .. -> src
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
-    >>> app.post('/', 'name=Bob', status=200)
+    >>> app.post('/', {'name': 'Bob'}, status=200)
     <200 OK text/html body='Hello Bob!'>
-    >>> app.put('/', 'name=Bob', status=200)
-    <200 OK text/html body='Hello Bob!'>
+    >>> app.put('/', {'name': 'Bob'}, status=200)
+    <200 OK text/html body='Hello Bob?'>
 
     >>> response = app.get(url, status=405)
     >>> response.headers['Allow']

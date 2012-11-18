@@ -160,7 +160,6 @@ class Application:
             config = DEFAULT
 
         self.config = config
-
         for name in filter(None, _uncomment(config, 'bobo_configure').split()):
             _get_global(name)(config)
 
@@ -270,7 +269,8 @@ class Application:
     def not_found(self, request, method):
         return _err_response(
             404, method, "Not Found",
-            "Could not find: "+ urllib.quote(request.path_info))
+            "Could not find: " + urllib.quote(
+                request.path_info.encode("utf-8")))
 
     def missing_form_variable(self, request, method, name):
         return _err_response(
@@ -765,8 +765,8 @@ def resource(route=None, method=('GET', 'POST', 'HEAD'),
     return _handler(route, method=method, check=check,
                     content_type=content_type, order_=order)
 
-def post(route=None, method=['POST', 'PUT'],
-         content_type=_default_content_type, check=None, order=None):
+def post(route=None, content_type=_default_content_type, check=None,
+         order=None):
     """Create a resource that passes POST data as arguments
 
     This function is used as a function decorator to define a resource.
@@ -780,13 +780,6 @@ def post(route=None, method=['POST', 'PUT'],
 
         if omitted, a route will be computed using the decorated
         callable's name with the content_type subtype used as an extension.
-
-    method
-        The HTTP request method or methods that can be used. This can
-        be either a string giving a single method name, or a sequence
-        of strings.
-
-        The method argument defaults to the string ``'POST'``.
 
     content_type
         The content_type for the response.
@@ -842,7 +835,7 @@ def post(route=None, method=['POST', 'PUT'],
     attribute, ``im_func`` is used to determine if the callable is a method, in
     which case the first argument found in the signature is ignored.
     """
-    return _handler(route, method=method, params='POST', check=check,
+    return _handler(route, method="POST", params='POST', check=check,
                     content_type=content_type, order_=order)
 
 def query(route=None, method=('GET', 'POST', 'HEAD'),
@@ -925,6 +918,193 @@ def query(route=None, method=('GET', 'POST', 'HEAD'),
     """
     return _handler(route, method=method, params='params', check=check,
                     content_type=content_type, order_=order)
+
+
+def get(route, content_type=_default_content_type, check=None, order_=None):
+    """Create a resource that handles GET requests.
+
+    Arguments:
+
+    route
+        The route to match against a request URL to determine if the decorated
+        callable should be used to satisfy a request.
+
+        if omitted, a route will be computed using the decorated
+        callable's name with the content_type subtype used as an extension.
+
+    content_type
+        The content_type for the response.
+
+        The content type is ignored if the callable returns a response object.
+
+    check
+        A check function.
+
+        If provided, the check function (or callable) will be called
+        before the decorated function.  The check function is passed
+        an instance, a request, and the decorated function.  If the
+        resource is a method, then first argument is the instance the
+        method was called on, otherwise it is None.  If the check
+        function returns a response, the response will be used instead
+        of calling the decorated function.
+
+    order
+        The order controls how resources are searched when matching
+        URLs.  Normally, resources are searched in order of
+        evaluation.  Passing the result of calling ``bobo.early`` or
+        ``bobo.late`` can cause resources to be searched early or late.
+    """
+    return _handler(route, method="GET", check=check, params="params",
+                    content_type=content_type, order_=order)
+
+def head(route, content_type=_default_content_type, check=None, order_=None):
+    """Create a resource that handles HEAD requests.
+
+    Arguments:
+
+    route
+        The route to match against a request URL to determine if the decorated
+        callable should be used to satisfy a request.
+
+        if omitted, a route will be computed using the decorated
+        callable's name with the content_type subtype used as an extension.
+
+    content_type
+        The content_type for the response.
+
+        The content type is ignored if the callable returns a response object.
+
+    check
+        A check function.
+
+        If provided, the check function (or callable) will be called
+        before the decorated function.  The check function is passed
+        an instance, a request, and the decorated function.  If the
+        resource is a method, then first argument is the instance the
+        method was called on, otherwise it is None.  If the check
+        function returns a response, the response will be used instead
+        of calling the decorated function.
+
+    order
+        The order controls how resources are searched when matching
+        URLs.  Normally, resources are searched in order of
+        evaluation.  Passing the result of calling ``bobo.early`` or
+        ``bobo.late`` can cause resources to be searched early or late.
+    """
+    return _handler(route, method="HEAD", params="params", check=check,
+                    content_type=content_type, order_=order)
+
+def put(route, content_type=_default_content_type, check=None, order_=None):
+    """Create a resource that handles PUT requests.
+
+    Arguments:
+
+    route
+        The route to match against a request URL to determine if the decorated
+        callable should be used to satisfy a request.
+
+        if omitted, a route will be computed using the decorated
+        callable's name with the content_type subtype used as an extension.
+
+    content_type
+        The content_type for the response.
+
+        The content type is ignored if the callable returns a response object.
+
+    check
+        A check function.
+
+        If provided, the check function (or callable) will be called
+        before the decorated function.  The check function is passed
+        an instance, a request, and the decorated function.  If the
+        resource is a method, then first argument is the instance the
+        method was called on, otherwise it is None.  If the check
+        function returns a response, the response will be used instead
+        of calling the decorated function.
+
+    order
+        The order controls how resources are searched when matching
+        URLs.  Normally, resources are searched in order of
+        evaluation.  Passing the result of calling ``bobo.early`` or
+        ``bobo.late`` can cause resources to be searched early or late.
+    """
+    return _handler(route, method="PUT", check=check, params="POST",
+                    content_type=content_type, order_=order)
+
+def delete(route, content_type=_default_content_type, check=None, order_=None):
+    """Create a resource that handles DELETE requests.
+
+    Arguments:
+
+    route
+        The route to match against a request URL to determine if the decorated
+        callable should be used to satisfy a request.
+
+        if omitted, a route will be computed using the decorated
+        callable's name with the content_type subtype used as an extension.
+
+    content_type
+        The content_type for the response.
+
+        The content type is ignored if the callable returns a response object.
+
+    check
+        A check function.
+
+        If provided, the check function (or callable) will be called
+        before the decorated function.  The check function is passed
+        an instance, a request, and the decorated function.  If the
+        resource is a method, then first argument is the instance the
+        method was called on, otherwise it is None.  If the check
+        function returns a response, the response will be used instead
+        of calling the decorated function.
+
+    order
+        The order controls how resources are searched when matching
+        URLs.  Normally, resources are searched in order of
+        evaluation.  Passing the result of calling ``bobo.early`` or
+        ``bobo.late`` can cause resources to be searched early or late.
+    """
+    return _handler(route, method="DELETE", check=check,
+                    content_type=content_type, order_=order)
+
+def options(route, content_type=_default_content_type, check=None, order_=None):
+    """Create a resource that handles OPTIONS requests.
+
+    Arguments:
+
+    route
+        The route to match against a request URL to determine if the decorated
+        callable should be used to satisfy a request.
+
+        if omitted, a route will be computed using the decorated
+        callable's name with the content_type subtype used as an extension.
+
+    content_type
+        The content_type for the response.
+
+        The content type is ignored if the callable returns a response object.
+
+    check
+        A check function.
+
+        If provided, the check function (or callable) will be called
+        before the decorated function.  The check function is passed
+        an instance, a request, and the decorated function.  If the
+        resource is a method, then first argument is the instance the
+        method was called on, otherwise it is None.  If the check
+        function returns a response, the response will be used instead
+        of calling the decorated function.
+
+    order
+        The order controls how resources are searched when matching
+        URLs.  Normally, resources are searched in order of
+        evaluation.  Passing the result of calling ``bobo.early`` or
+        ``bobo.late`` can cause resources to be searched early or late.
+    """
+    return _handler(route, method="OPTIONS", params="params", check=check,
+                    content_type=content_type, order_=order)
+
 
 route_re = re.compile(r'(/:[a-zA-Z]\w*\??)(\.[^/]+)?')
 def _compile_route(route, partial=False):
