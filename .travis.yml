@@ -5,6 +5,6 @@ python:
   - 3.2
   - pypy
 install:
-  - python$TRAVIS_PYTHON_VERSION bootstrap-py3k.py -d
+  - python bootstrap-py3k.py -d
   - bin/buildout
 script: ./bin/test
