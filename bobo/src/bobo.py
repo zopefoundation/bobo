@@ -920,7 +920,7 @@ def query(route=None, method=('GET', 'POST', 'HEAD'),
                     content_type=content_type, order_=order)
 
 
-def get(route, content_type=_default_content_type, check=None, order_=None):
+def get(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles GET requests.
 
     Arguments:
@@ -957,7 +957,7 @@ def get(route, content_type=_default_content_type, check=None, order_=None):
     return _handler(route, method="GET", check=check, params="params",
                     content_type=content_type, order_=order)
 
-def head(route, content_type=_default_content_type, check=None, order_=None):
+def head(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles HEAD requests.
 
     Arguments:
@@ -994,7 +994,7 @@ def head(route, content_type=_default_content_type, check=None, order_=None):
     return _handler(route, method="HEAD", params="params", check=check,
                     content_type=content_type, order_=order)
 
-def put(route, content_type=_default_content_type, check=None, order_=None):
+def put(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles PUT requests.
 
     Arguments:
@@ -1031,7 +1031,7 @@ def put(route, content_type=_default_content_type, check=None, order_=None):
     return _handler(route, method="PUT", check=check, params="POST",
                     content_type=content_type, order_=order)
 
-def delete(route, content_type=_default_content_type, check=None, order_=None):
+def delete(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles DELETE requests.
 
     Arguments:
@@ -1068,7 +1068,7 @@ def delete(route, content_type=_default_content_type, check=None, order_=None):
     return _handler(route, method="DELETE", check=check,
                     content_type=content_type, order_=order)
 
-def options(route, content_type=_default_content_type, check=None, order_=None):
+def options(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles OPTIONS requests.
 
     Arguments:
