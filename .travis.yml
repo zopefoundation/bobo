@@ -7,3 +7,5 @@ install:
   - python bootstrap-py3k.py -d
   - bin/buildout
 script: ./bin/test
+notifications:
+    email: false
