@@ -5,7 +5,7 @@ python:
     - 3.3
 install:
     - pip install setuptools>=1.4
-    - python bootstrap.py
+    - pip install zc.buildout
     - ./bin/buildout
 script:
     - ./bin/test
