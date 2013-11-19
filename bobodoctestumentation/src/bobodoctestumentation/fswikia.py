@@ -57,7 +57,8 @@ def authenticated(self, request, func):
 
 @bobo.post('/:name', check=authenticated)
 def save(bobo_request, name, body):
-    open(os.path.join(top, name), 'w').write(body.encode('UTF-8'))
+    with open(os.path.join(top, name), "wb") as f:
+        f.write(body.encode('UTF-8'))
     return bobo.redirect(bobo_request.path_url, 303)
 
 @bobo.query('/:name')
@@ -66,7 +67,8 @@ def get(bobo_request, name, edit=None):
 
     path = os.path.join(top, name)
     if os.path.exists(path):
-        body = open(path).read().decode('UTF-8')
+        with open(path, "rb") as f:
+            body = f.read().decode("utf-8")
         if edit:
             return open(edit_html).read() % dict(
                 name=name, body=body, action='Edit')

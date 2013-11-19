@@ -34,11 +34,13 @@ __all__ = (
 
 __metaclass__ = type
 
+import inspect
 import logging
 import re
 import sys
-import urllib
 import webob
+import six
+from six.moves import filter, urllib
 
 log = logging.getLogger(__name__)
 
@@ -189,7 +191,7 @@ class Application:
             for handler in self.handlers:
                 try:
                     response = handler(request, path, method)
-                except MethodNotAllowed, exc:
+                except MethodNotAllowed as exc:
                     allowed.update(exc.allowed)
                     continue
                 if response is not None:
@@ -197,15 +199,15 @@ class Application:
             if allowed:
                 return self.method_not_allowed(request, method, allowed)
             return self.not_found(request, method)
-        except BoboException, exc:
+        except BoboException as exc:
             return self.build_response(request, method, exc)
-        except MissingFormVariable, v:
+        except MissingFormVariable as v:
             return self.missing_form_variable(request, method, v.name)
         except NotFound:
             return self.not_found(request, method)
         except bbbbad_errors:
             raise
-        except Exception:
+        except Exception as exc:
             if request.environ.get("x-wsgiorg.throw_errors"):
                 raise
             return self.exception(request, method, sys.exc_info())
@@ -254,13 +256,13 @@ class Application:
             return response
 
         body = data.body
-        if isinstance(body, str):
+        if isinstance(body, six.text_type):
+            response.text = body
+        elif isinstance(body, six.binary_type):
             response.body = body
         elif _json_content_type(content_type):
             import json
-            response.body = json.dumps(body)
-        elif isinstance(body, unicode):
-            response.unicode_body = body
+            response.body = json.dumps(body).encode("utf-8")
         else:
             raise TypeError('bad response', body, content_type)
 
@@ -269,7 +271,7 @@ class Application:
     def not_found(self, request, method):
         return _err_response(
             404, method, "Not Found",
-            "Could not find: " + urllib.quote(
+            "Could not find: " + urllib.parse.quote(
                 request.path_info.encode("utf-8")))
 
     def missing_form_variable(self, request, method, name):
@@ -336,18 +338,18 @@ def _scan_module(module_name):
         return
 
     resources = []
-    for resource in module.__dict__.itervalues():
+    for resource in six.itervalues(module.__dict__):
         bobo_response = getattr(resource, 'bobo_response', None)
         if bobo_response is None:
             continue
         # Check for unbound handler and skip
-        if getattr(bobo_response, 'im_self', bobo_response) is None:
+        if getattr(bobo_response, "__self__", None) is None:
             continue
 
         order = getattr(resource, 'bobo_order', 0) or _late_base
         resources.append((order, resource, bobo_response))
 
-    resources.sort()
+    resources.sort(key=lambda o: o[0])
     by_route = {}
     for order, resource, bobo_response in resources:
         route = getattr(resource, 'bobo_route', None)
@@ -386,10 +388,10 @@ def _make_br_function_by_methods(route, by_method):
 
 def _uncomment(config, name, split=False):
     str = config.get(name, '')
-    result = filter(None, (
+    result = list(filter(None, (
         line.split('#', 1)[0].strip()
         for line in str.strip().split('\n')
-        ))
+        )))
     if split:
         return result
     return '\n'.join(result)
@@ -409,7 +411,7 @@ def resources(resources):
     """
     handlers = _MultiResource()
     for resource in resources:
-        if isinstance(resource, basestring):
+        if isinstance(resource, six.string_types):
             if ':' in resource:
                 resource = _get_global(resource)
             else:
@@ -427,14 +429,13 @@ def reroute(route, resource):
     The resource can be a string, in which case it should be a global
     name, of the form ``module:expression``.
     """
-    if isinstance(resource, basestring):
+    if isinstance(resource, six.string_types):
         resource = _get_global(resource)
 
     try:
         bobo_reroute = resource.bobo_reroute
     except AttributeError:
-        import types
-        if isinstance(resource, (type, types.ClassType)):
+        if isinstance(resource, six.class_types):
             return Subroute(route, resource)
         raise TypeError("Expected a reroutable")
     return bobo_reroute(route)
@@ -451,7 +452,7 @@ def preroute(route, resource):
     bobo_response function, then a resource is computed that tries
     each of the resources found in the module in order.
     """
-    if isinstance(resource, basestring):
+    if isinstance(resource, six.string_types):
         if ':' in resource:
             resource = _get_global(resource)
         else:
@@ -556,7 +557,7 @@ class _Handler:
             if ext:
                 route += '.'+ext.group(1)
         self.bobo_route = route
-        if isinstance(method, basestring):
+        if isinstance(method, six.string_types):
             method = (method, )
         self.bobo_methods = method
 
@@ -620,11 +621,11 @@ class _Handler:
 
     @property
     def func_code(self):
-        return self.bobo_original.func_code
+        return six.get_function_code(self.bobo_original)
 
     @property
     def func_defaults(self):
-        return self.bobo_original.func_defaults
+        return six.get_function_defaults(self.bobo_original)
 
     @property
     def __name__(self):
@@ -646,7 +647,7 @@ class _UnboundHandler:
         self._check_args(args)
         if inst is None:
             return self
-        return _BoundHandler(self.im_func, inst, self.im_class_)
+        return _BoundHandler(self.im_func, inst, self.im_class)
 
     def __repr__(self):
         return "<unbound resource %s.%s>" % (
@@ -687,12 +688,12 @@ class _BoundHandler:
 
 def _handler(route, func=None, **kw):
     if func is None:
-        if route is None or isinstance(route, basestring):
+        if route is None or isinstance(route, six.string_types):
             return lambda f: _handler(route, f, **kw)
         func = route
         route = None
     elif route is not None:
-        assert isinstance(route, basestring)
+        assert isinstance(route, six.string_types)
         if route and not route.startswith('/'):
             raise ValueError("Non-empty routes must start with '/'.", route)
 
@@ -1138,7 +1139,7 @@ def _compile_route(route, partial=False):
             if m is None:
                 return m
             path = path[len(m.group(0)):]
-            return (dict(item for item in m.groupdict().iteritems()
+            return (dict(item for item in six.iteritems(m.groupdict())
                          if item[1] is not None),
                     path,
                     )
@@ -1148,7 +1149,7 @@ def _compile_route(route, partial=False):
             m = match(path)
             if m is None:
                 return m
-            return dict(item for item in m.groupdict().iteritems()
+            return dict(item for item in six.iteritems(m.groupdict())
                         if item[1] is not None)
 
     return route_data
@@ -1172,35 +1173,10 @@ def _make_bobo_handle(func, original, check, content_type):
     return handle
 
 def _make_caller(obj, paramsattr):
-    wrapperCount = 0
-    unwrapped = obj
-
-    for i in range(10):
-        bases = getattr(unwrapped, '__bases__', None)
-        if bases is not None:
-            raise TypeError("mapply() can not call class constructors")
-
-        im_func = getattr(unwrapped, 'im_func', None)
-        if im_func is not None:
-            unwrapped = im_func
-            wrapperCount += 1
-        elif getattr(unwrapped, 'func_code', None) is not None:
-            break
-        else:
-            unwrapped = getattr(unwrapped, '__call__' , None)
-            if unwrapped is None:
-                raise TypeError("mapply() can not call %s" % repr(obj))
-    else:
-        raise TypeError("couldn't find callable metadata, mapply() error on %s"
-                        % repr(obj))
-
-    code = unwrapped.func_code
-    defaults = unwrapped.func_defaults
-    names = code.co_varnames[wrapperCount:code.co_argcount]
-    nargs = len(names)
-    nrequired = len(names)
-    if defaults:
-        nrequired -= len(defaults)
+    spec = inspect.getargspec(obj)
+    nargs = nrequired = len(spec.args)
+    if spec.defaults:
+        nrequired -= len(spec.defaults)
 
     # XXX maybe handle f(..., **kw)?
 
@@ -1210,7 +1186,7 @@ def _make_caller(obj, paramsattr):
         params = getattr(request, paramsattr)
         kw = {}
         for index in range(len(pargs), nargs):
-            name = names[index]
+            name = spec.args[index]
             if name == 'bobo_request':
                 kw[name] = request
                 continue
@@ -1257,8 +1233,7 @@ def _subroute(route, ob, scan):
         scan_class(ob)
         return _subroute_class(route, ob)
 
-    import types
-    if isinstance(ob, (type, types.ClassType)):
+    if isinstance(ob, six.class_types):
         return _subroute_class(route, ob)
     return Subroute(route, ob)
 
@@ -1326,7 +1301,7 @@ def subroute(route=None, scan=False, order=None):
 
     if route is None:
         return lambda ob: _subroute('/'+ob.__name__, ob, scan)
-    if isinstance(route, basestring):
+    if isinstance(route, six.string_types):
         return lambda ob: _subroute(route, ob, scan)
     return _subroute('/'+route.__name__, route, scan)
 
@@ -1357,7 +1332,8 @@ def _subroute_class(route, ob):
 
     br_orig = getattr(ob, 'bobo_response', None)
     if br_orig is not None:
-        if br_orig.im_self is not None:
+
+        if inspect.isclass(getattr(br_orig, "__self__", None)):
             # we found another class method.
             if len(matchers) > 1:
                 # stacked matchers, so we're done
@@ -1388,14 +1364,9 @@ def scan_class(class_):
     a bobo_response method of the class that calls them.
     """
 
-    try:
-        mro = class_.__mro__
-    except AttributeError:
-        mro = type('C', (object, class_), {}).__mro__
-
     resources = {}
-    for c in reversed(mro):
-        for name, resource in c.__dict__.iteritems():
+    for c in reversed(inspect.getmro(class_)):
+        for name, resource in six.iteritems(c.__dict__):
             br = getattr(resource, 'bobo_response', None)
             if br is None:
                 continue
@@ -1406,7 +1377,7 @@ def scan_class(class_):
     handlers = []
     for (order, (name, resource)) in sorted(
         (order, (name, resource))
-        for (name, (order, resource)) in resources.iteritems()
+        for (name, (order, resource)) in six.iteritems(resources)
         ):
         route = getattr(resource, 'bobo_route', None)
         if route is not None:
@@ -1431,7 +1402,7 @@ def scan_class(class_):
         for handler in handlers:
             try:
                 found = handler(self, request, path, method)
-            except MethodNotAllowed, exc:
+            except MethodNotAllowed as exc:
                 allowed.update(exc.allowed)
                 continue
             if found is not None:

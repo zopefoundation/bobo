@@ -14,7 +14,7 @@ given modules for resources.  Let's create some resources in some test modules:
     ...         self.path = path
     ...         self.bobo_order = bobo.order()
     ...     def bobo_response(self, request, path, method):
-    ...         print 'trying', self.path
+    ...         print('trying %s' % self.path)
     ...         if path == self.path:
     ...             return self(request)
     ...     def __call__(self, request, where='here'):
@@ -44,11 +44,11 @@ Now, we'll create an application:
 
 We can make requests of the application for our test paths:
 
-    >>> print app.get('/mod1/v0', status=200).body
+    >>> print(app.get('/mod1/v0', status=200).text)
     trying /mod1/v0
     /mod1/v0 here!
 
-    >>> print app.get('/mod2/v3', status=200).body
+    >>> print(app.get('/mod2/v3', status=200).text)
     trying /mod1/v0
     trying /mod1/v1
     trying /mod1/v2
@@ -63,7 +63,7 @@ We can make requests of the application for our test paths:
 If make requests for a path we don't have a resource for, we'll get a
 non-found response:
 
-    >>> print app.get('/mod2', status=404).body
+    >>> print(app.get('/mod2', status=404).text)
     trying /mod1/v0
     trying /mod1/v1
     trying /mod1/v2
@@ -93,7 +93,7 @@ Routes can be defined as part of the configuration:
 
 Now, with the new app, the old routes don't work, but the new ones do:
 
-    >>> print app.get('/mod2/v3', status=404).body
+    >>> print(app.get('/mod2/v3', status=404).text)
     trying /foo/bar
     trying /:where/x
     <html>
@@ -102,11 +102,11 @@ Now, with the new app, the old routes don't work, but the new ones do:
     </html>
     <BLANKLINE>
 
-    >>> print app.get('/foo/bar', status=200).body
+    >>> print(app.get('/foo/bar', status=200).text)
     trying /foo/bar
     /foo/bar here!
 
-    >>> print app.get('/there/x', status=404).body
+    >>> print(app.get('/there/x', status=404).text)
     trying /foo/bar
     trying /:where/x
     <html>
@@ -139,21 +139,21 @@ called to produce resources.
     ...          bobo.testmodule2:SubRoute
     ...     """)
 
-    >>> print app.get('/there/x', status=404).body
+    >>> print(app.get('/there/x', status=404).text)
     <html>
     <head><title>Not Found</title></head>
     <body>Could not find: /there/x</body>
     </html>
     <BLANKLINE>
 
-    >>> print app.get('/there/x/y/z', status=200).body
-    {'where': u'there'}
+    >>> print(app.get('/there/x/y/z', status=200).text)
+    {'where': 'there'}
 
 Note classes that define bobo_response instance methods aren't
 found via module scanning:
 
     >>> app = makeapp(bobo_resources='bobo.testmodule2')
-    >>> print app.get('/xxx', status=404).body
+    >>> print(app.get('/xxx', status=404).text)
     trying /mod2/v0
     trying /mod2/v1
     trying /mod2/v2
@@ -172,11 +172,11 @@ class methods will be found:
     >>> class C:
     ...     @classmethod
     ...     def bobo_response(self, request, path, method):
-    ...         print 'trying C'
+    ...         print('trying C')
 
     >>> bobo.testmodule2.C = C
     >>> app = makeapp(bobo_resources='bobo.testmodule2')
-    >>> print app.get('/xxx', status=404).body
+    >>> print(app.get('/xxx', status=404).text)
     trying /mod2/v0
     trying /mod2/v1
     trying /mod2/v2
@@ -194,14 +194,14 @@ Configuration handlers
 
     >>> import pprint
     >>> def config_handler(d):
-    ...     print 'handler1'
+    ...     print('handler1')
     ...     pprint.pprint(d, width=1)
 
     >>> bobo.testmodule1.config_handler = config_handler
 
     >>> import pprint
     >>> def config_handler(d):
-    ...     print 'handler2'
+    ...     print('handler2')
     ...     pprint.pprint(d, width=1)
 
     >>> bobo.testmodule2.config_handler = config_handler
@@ -252,26 +252,26 @@ When scanning a module, resources with the same routs are combined.
 
     >>> app = makeapp(bobo_resources='bobo.testmodule1')
 
-    >>> print app.get('', status=200).body
+    >>> print(app.get('', status=200).text)
     B.get GET
 
-    >>> print app.post('', '', status=200).body
+    >>> print(app.post('', '', status=200).text)
     C.post POST
 
-    >>> print app.get('', extra_environ=dict(REQUEST_METHOD='HEAD'),
-    ...               status=405)
+    >>> print(app.get('', extra_environ=dict(REQUEST_METHOD='HEAD'),
+    ...               status=405))
     Response: 405 Method Not Allowed
     Allow: GET, POST
     Content-Type: text/html; charset=UTF-8
     <BLANKLINE>
 
-    >>> print app.get('/a', status=200).body
+    >>> print(app.get('/a', status=200).text)
     B.gety GET a
 
-    >>> print app.post('/a', '', status=200).body
+    >>> print(app.post('/a', '', status=200).text)
     C.posty POST a
 
-    >>> print app.delete('/a', status=405)
+    >>> print(app.delete('/a', status=405))
     Response: 405 Method Not Allowed
     Allow: GET, POST
     Content-Type: text/html; charset=UTF-8
@@ -288,7 +288,7 @@ redirect
     >>> response # doctest: +ELLIPSIS
     <Response at ... 302 Found>
 
-    >>> print str(response).lower()
+    >>> print(str(response).lower())
     302 found
     location: http://www.python.org/
     content-type: text/html; charset=utf-8
@@ -325,7 +325,7 @@ Ordering
     >>> bobo.testmodule1.f2 = f2
 
     >>> app = makeapp(bobo_resources='bobo.testmodule1')
-    >>> app.get('/o').body
+    >>> app.get('/o').text
     'f2'
 
     >>> @bobo.query('/o', order=bobo.early())
@@ -334,5 +334,5 @@ Ordering
     >>> bobo.testmodule1.f3 = f3
 
     >>> app = makeapp(bobo_resources='bobo.testmodule1')
-    >>> app.get('/o').body
+    >>> app.get('/o').text
     'f3'

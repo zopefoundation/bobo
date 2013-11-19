@@ -34,13 +34,13 @@ authorization::
     >>> helloapp.data
     {'x': 'some text'}
 
-    >>> app.post('/foo', 'body=sometext',status=200,
-    ...     extra_environ=dict(REMOTE_USER='jim')).body
-    'Updated'
+    >>> print(app.post('/foo', 'body=sometext',status=200,
+    ...     extra_environ=dict(REMOTE_USER='jim')).text)
+    Updated
 
     >>> import pprint
     >>> pprint.pprint(helloapp.data, width=1)
-    {u'foo': u'sometext',
+    {'foo': 'sometext',
      'x': 'some text'}
 
 In this example, we use a very simple authorization model.  We can
@@ -203,7 +203,7 @@ Then docs::
         @bobo.query('/')
         def index(self):
             return '\n'.join('<a href="%s">%s<a><br>' % (k, k)
-                             for k in self.data)
+                             for k in sorted(self.data))
 
         @bobo.subroute('/:item_id')
         def subitem(self, request, item_id):
@@ -248,9 +248,10 @@ with::
 
 .. -> ini
 
-    >>> import ConfigParser, StringIO
-    >>> parser = ConfigParser.ConfigParser()
-    >>> parser.readfp(StringIO.StringIO(ini))
+    >>> import six
+    >>> from six.moves import configparser
+    >>> parser = configparser.ConfigParser()
+    >>> parser.readfp(six.StringIO(ini))
     >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
 
 This example shows a number of things:
@@ -276,7 +277,7 @@ This example shows a number of things:
      .. -> expected1
        >>> expected1 = expected1.strip()
 
-         >>> app.get(url1, status=200).body == expected1
+         >>> app.get(url1, status=200).text == expected1
          True
 
   2. Use the resources from a module with their original routes.
@@ -295,7 +296,7 @@ This example shows a number of things:
      .. -> expected2
        >>> expected2 = expected2.strip()
 
-         >>> app.get(url2, status=200).body == expected2
+         >>> app.get(url2, status=200).text == expected2
          True
 
   3. Define a new route for an existing resource.
@@ -315,7 +316,7 @@ This example shows a number of things:
      .. -> expected3
        >>> expected3 = expected3.strip()
 
-         >>> app.get(url3, status=200).body == expected3
+         >>> app.get(url3, status=200).text == expected3
          True
 
   4. Define a new route for an existing subroute.
@@ -334,7 +335,7 @@ This example shows a number of things:
      .. -> expected4
        >>> expected4 = expected4.strip()
 
-         >>> app.get(url4, status=200).body == expected4
+         >>> app.get(url4, status=200).text == expected4
          True
 
   5. Use all of the routes from a module with a prefix added.
@@ -353,7 +354,7 @@ This example shows a number of things:
      .. -> expected5
        >>> expected5 = expected5.strip()
 
-         >>> app.get(url5, status=200).body == expected5
+         >>> app.get(url5, status=200).text == expected5
          True
 
   6. Use an existing route adding a prefix.
@@ -372,7 +373,7 @@ This example shows a number of things:
      .. -> expected6
        >>> expected6 = expected6.strip()
 
-         >> app.get(url6, status=200).body == expected6
+         >> app.get(url6, status=200).text == expected6
          True
 
 .. check base and index
@@ -382,7 +383,7 @@ This example shows a number of things:
 
     >>> app.get(url7, status=302).headers['location']
     'http://localhost:8080/docs/bobs/'
-    >>> print app.get(url8, status=200).body,
+    >>> print(app.get(url8, status=200).text)
     <a href="hi.html">hi.html<a><br>
     <a href="hobbies">hobbies<a><br>
 
@@ -421,24 +422,24 @@ function::
     ... """)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='routemod'))
 
-    >>> app.get(url1, status=200).body == expected1
+    >>> app.get(url1, status=200).text == expected1
     True
-    >>> app.get(url2, status=200).body == expected2
+    >>> app.get(url2, status=200).text == expected2
     True
-    >>> app.get(url3, status=200).body == expected3
+    >>> app.get(url3, status=200).text == expected3
     True
-    >>> app.get(url4, status=200).body == expected4
+    >>> app.get(url4, status=200).text == expected4
     True
-    >>> app.get(url5, status=200).body == expected5
+    >>> app.get(url5, status=200).text == expected5
     True
-    >>> app.get(url6, status=200).body == expected6
+    >>> app.get(url6, status=200).text == expected6
     True
-    >>> app.get('http://localhost:8080/xxx.html', status=200).body == 'xxx'
+    >>> app.get('http://localhost:8080/xxx.html', status=200).text == 'xxx'
     True
 
     >>> app.get(url7, status=302).headers['location']
     'http://localhost:8080/docs/bobs/'
-    >>> print app.get(url8, status=200).body,
+    >>> print(app.get(url8, status=200).text)
     <a href="hi.html">hi.html<a><br>
     <a href="hobbies">hobbies<a><br>
 
@@ -499,23 +500,23 @@ resource by defining a ``bobo_response`` module attribute::
 
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='routemod2'))
 
-    >>> app.get(url1, status=200).body == expected1
+    >>> app.get(url1, status=200).text == expected1
     True
-    >>> app.get(url2, status=200).body == expected2
+    >>> app.get(url2, status=200).text == expected2
     True
-    >>> app.get(url3, status=200).body == expected3
+    >>> app.get(url3, status=200).text == expected3
     True
-    >>> app.get(url4, status=200).body == expected4
+    >>> app.get(url4, status=200).text == expected4
     True
-    >>> app.get(url5, status=200).body == expected5
+    >>> app.get(url5, status=200).text == expected5
     True
-    >>> app.get(url6, status=200).body == expected6
+    >>> app.get(url6, status=200).text == expected6
     True
     >>> _ = app.get('http://localhost:8080/xxx', status=404)
 
     >>> app.get(url7, status=302).headers['location']
     'http://localhost:8080/docs/bobs/'
-    >>> print app.get(url8, status=200).body,
+    >>> print(app.get(url8, status=200).text)
     <a href="hi.html">hi.html<a><br>
     <a href="hobbies">hobbies<a><br>
 
@@ -610,8 +611,8 @@ Then a configuration file::
 
 .. -> ini
 
-    >>> parser = ConfigParser.ConfigParser()
-    >>> parser.readfp(StringIO.StringIO(ini))
+    >>> parser = configparser.ConfigParser()
+    >>> parser.readfp(six.StringIO(ini))
     >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
 
 If we use the URL::
@@ -725,8 +726,8 @@ use an expression to specify the errors object.
 
 .. check
 
-    >>> parser = ConfigParser.ConfigParser()
-    >>> parser.readfp(StringIO.StringIO(ini2))
+    >>> parser = configparser.ConfigParser()
+    >>> parser.readfp(six.StringIO(ini2))
     >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
 
     >>> str(app.get(url1)).strip() == expected1
@@ -770,7 +771,7 @@ give to ``bobo_errors``.
            return webob.Response("Missing "+name)
 
        def exception(self, request, method, exc_info):
-           return webob.Response("Dang! %s" % exc_info[1], status=500)
+           return webob.Response("Dang! %s" % exc_info[0].__name__, status=500)
 
 .. -> src
 
@@ -779,7 +780,7 @@ give to ``bobo_errors``.
     >>> update_module('badapp',
     ...   'import bobo\n\n@bobo.resource\ndef bad(x, y):\n  pass\n')
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='badapp'))
-    >>> print app.get('/bad.html', status=500).body
+    >>> print(app.get('/bad.html', status=500).text)
     <html>
     <head><title>Internal Server Error</title></head>
     <body>An error occurred.</body>
@@ -796,19 +797,19 @@ give to ``bobo_errors``.
     http://localhost/bad.html
     Traceback (most recent call last):
     ...
-    TypeError: bad() takes exactly 2 arguments (1 given)
+    TypeError: ...
 
     >>> bobo.log.removeHandler(handler)
 
     >>> app.get("/bad.html", extra_environ={"x-wsgiorg.throw_errors": "1"})
     Traceback (most recent call last):
     ...
-    TypeError: bad() takes exactly 2 arguments (1 given)
+    TypeError: ...
 
     >>> app = webtest.TestApp(bobo.Application(
     ...    bobo_resources='badapp', bobo_errors='errorsample2:Errors()'))
-    >>> app.get('/bad.html', status=500).body
-    'Dang! bad() takes exactly 2 arguments (1 given)'
+    >>> print(app.get('/bad.html', status=500).text)
+    Dang! TypeError
 
 .. _orderl:
 
@@ -839,10 +840,10 @@ handling specific HTTP methods.  We'll construct a simple RESTful app
 to demonstrate.
 
 ::
-   
+
    import bobo
    import webob
-   
+
    items = {}
 
    @bobo.get("/item/:id")
@@ -851,11 +852,10 @@ to demonstrate.
          data, ct = items[id]
          return webob.Response(body=data, content_type=ct)
       raise bobo.NotFound
-   
+
    @bobo.head("/item/:id")
    def _head(bobo_request, id):
       res = _get(bobo_request, id)
-      res.body = ""
       return res
 
    @bobo.put("/item/:id")
@@ -877,26 +877,26 @@ to demonstrate.
 
    >>> update_module('verbsample', src)
    >>> app = webtest.TestApp(bobo.Application(bobo_resources="verbsample"))
-   >>> print app.put("/item/1", "yaddayadda", content_type="text/plain").status
+   >>> print(app.put("/item/1", "yaddayadda", content_type="text/plain").status)
    201 Created
 
-   >>> print app.get("/item/1")
+   >>> print(app.get("/item/1"))
    Response: 200 OK
    Content-Type: text/plain; charset=UTF-8
    yaddayadda
 
-   >>> print app.request("/item/1", method="HEAD")
+   >>> print(app.request("/item/1", method="HEAD"))
    Response: 200 OK
    Content-Type: text/plain; charset=UTF-8
    <BLANKLINE>
 
-   >>> print app.request("/item/1", method="OPTIONS").status
+   >>> print(app.request("/item/1", method="OPTIONS").status)
    200 OK
-   
-   >>> print app.delete("/item/1").status
+
+   >>> print(app.delete("/item/1").status)
    200 OK
-   
-   >>> print app.get("/item/1", status=404).status
+
+   >>> print(app.get("/item/1", status=404).status)
    404 Not Found
 
 Backtracking
@@ -960,13 +960,13 @@ We have a resource that matches the route "/event/create", but it is
 for POST requests.  If we make a GET request, the second resource
 with the matching route that can handle GET requests gets called.
 
-    >>> app.get('/event/create').body
-    "get request for u'create'"
+    >>> print(app.get('/event/create').text)
+    get request for 'create'
 
 Of course POST requests go to the appropriate resource.
 
-    >>> app.post('/event/create').body
-    'created event'
+    >>> print(app.post('/event/create').text)
+    created event
 
 If we perform a HEAD request for "/event/create", we get a 405 response,
 as no resource is able to handle the method.  The "Allow" header indicates
@@ -977,20 +977,20 @@ all of the request methods that are valid for the particular path.
 
 The backtracking behavior works with subroutes.
 
-    >>> app.get('/users/1234').body
-    "get user with id u'1234'"
+    >>> print(app.get('/users/1234').text)
+    get user with id '1234'
 
-    >>> app.head('/users/1234').status
-    '200 OK'
+    >>> print(app.head('/users/1234').status)
+    200 OK
 
-    >>> app.post('/users/1234').body
-    "created user with id u'1234'"
+    >>> print(app.post('/users/1234').text)
+    created user with id '1234'
 
 If the first matching subroute returns a resource with no handlers for
 the request method, the next matching subroute is tried.
 
-    >>> app.put('/users/54321').body
-    "put thing with id u'54321'"
+    >>> print(app.put('/users/54321').text)
+    put thing with id '54321'
 
 If no resource is able to handle the request method, we get a 405 response
 with an Allow header.

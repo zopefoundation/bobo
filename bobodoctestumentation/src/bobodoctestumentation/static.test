@@ -4,8 +4,8 @@ Static resource
     >>> import bobo, os, webtest
     >>> os.mkdir('docs')
     >>> os.mkdir(os.path.join('docs', 'subdir'))
-    >>> open(os.path.join('docs', 'doc1.txt'), 'w').write('doc1 text')
-    >>> open(os.path.join('docs', 'subdir', 'doc2.html'), 'w').write(
+    >>> _ = open(os.path.join('docs', 'doc1.txt'), 'w').write('doc1 text')
+    >>> _ = open(os.path.join('docs', 'subdir', 'doc2.html'), 'w').write(
     ...    'doc2 text')
 
     >>> app = webtest.TestApp(bobo.Application(
@@ -13,11 +13,10 @@ Static resource
     ...     '/resources +> bobodoctestumentation.static:Directory("docs")',
     ...   ))
 
-    >>> app.get('/resources') # doctest: +NORMALIZE_WHITESPACE
-    <302 Found text/html
-       location: http://localhost/resources/ body='See http:...ces/'/31>
+    >>> app.get('/resources')
+    <302 Found text/html location: http://localhost/resources/ body=...'See http...ces/'/31>
 
-    >>> print app.get('/resources/', status=200).body
+    >>> print(app.get('/resources/', status=200).text)
     <html>
             <head><title></title></head>
             <body>
@@ -27,11 +26,10 @@ Static resource
             </html>
     <BLANKLINE>
 
-    >>> app.get('/resources/subdir') # doctest: +NORMALIZE_WHITESPACE
-    <302 Found text/html
-      location: http://localhost/resources/subdir/ body='See http:...dir/'/38>
+    >>> app.get('/resources/subdir')
+    <302 Found text/html location: http://localhost/resources/subdir/ body=...'See http...dir/'/38>
 
-    >>> print app.get('/resources/subdir/', status=200).body
+    >>> print(app.get('/resources/subdir/', status=200).text)
     <html>
             <head><title>subdir</title></head>
             <body>
@@ -41,26 +39,28 @@ Static resource
     <BLANKLINE>
 
     >>> app.get('/resources/doc1.txt')
-    <200 OK text/plain body='doc1 text'>
+    <200 OK text/plain body=...'doc1 text'>
 
     >>> app.get('/resources/subdir/doc2.html')
-    <200 OK text/html body='doc2 text'>
+    <200 OK text/html body=...'doc2 text'>
 
-    >>> print app.get('/resources/doc2.html', status=404).body,
+    >>> print(app.get('/resources/doc2.html', status=404).text)
     <html>
     <head><title>Not Found</title></head>
     <body>Could not find: /resources/doc2.html</body>
     </html>
+    <BLANKLINE>
 
-    >>> print app.get('/resources//etc/passwd', status=404).body,
+    >>> print(app.get('/resources//etc/passwd', status=404).text)
     <html>
     <head><title>Not Found</title></head>
     <body>Could not find: /resources//etc/passwd</body>
     </html>
+    <BLANKLINE>
 
-    >>> print app.get('/resources/../../', status=404).body,
+    >>> print(app.get('/resources/../../', status=404).text)
     <html>
     <head><title>Not Found</title></head>
     <body>Could not find: /resources/../../</body>
     </html>
-
+    <BLANKLINE>
