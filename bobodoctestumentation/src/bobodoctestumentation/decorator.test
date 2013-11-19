@@ -205,6 +205,8 @@ We use resources by calling the result of calling bobo_response:
     ...             request, request.path_info, request.method)
     ...         if found is not None:
     ...             print_response(found)
+    ...     except (bobo.MissingFormVariable, bobo.MethodNotAllowed) as exc:
+    ...         print("Raised %s: %s" % (exc.__class__.__name__, exc,))
     ...     except bobo.BoboException as v:
     ...         print(v.__class__.__name__+':')
     ...         pprint.pprint(v.__dict__, width=1)
@@ -241,9 +243,7 @@ order.
 Here, we matched the second caller and passed the name.
 
     >>> call_resource(hi, '/foo', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    bobo.MethodNotAllowed: Allowed: 'GET'
+    Raised MethodNotAllowed: Allowed: 'GET'
 
 This time, we matched the first resource, but the method was invalid,
 so a MethodNotAllowed exception was raised.
@@ -369,9 +369,7 @@ The query decorators will also use form data:
 If parameters are ommitted, we'll get a MissingFormVariable error:
 
     >>> call_resource(foo, '/a/b')
-    Traceback (most recent call last):
-    ...
-    bobo.MissingFormVariable: y
+    Raised MissingFormVariable: y
 
 The post decorator will *only* use form data:
 
@@ -394,9 +392,7 @@ The post decorator will *only* use form data:
      'status': 200}
 
     >>> call_resource(foo, '/a/b', 'z=1')
-    Traceback (most recent call last):
-    ...
-    bobo.MissingFormVariable: y
+    Raised MissingFormVariable: y
 
 Resources as methods
 --------------------
@@ -594,9 +590,7 @@ Scanning classes with duplicate routes
      'status': 200}
 
     >>> call_resource(C, '/pre', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    bobo.MethodNotAllowed: Allowed: 'GET', 'POST'
+    Raised MethodNotAllowed: Allowed: 'GET', 'POST'
 
     >>> call_resource(C, '/pre/a')
     BoboException:
@@ -613,9 +607,7 @@ Scanning classes with duplicate routes
      'status': 200}
 
     >>> call_resource(C, '/pre/a', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    bobo.MethodNotAllowed: Allowed: 'GET', 'POST'
+    Raised MethodNotAllowed: Allowed: 'GET', 'POST'
 
 subroutes don't screw up other uses of a class
 ----------------------------------------------
