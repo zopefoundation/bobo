@@ -6,7 +6,7 @@ python:
 install:
     - pip install setuptools>=1.4
     - pip install zc.buildout
-    - ./bin/buildout
+    - buildout
 script:
     - ./bin/test
 notifications:
