@@ -5,7 +5,7 @@ python:
     - 3.3
 install:
     - pip install --upgrade setuptools>=1.4
-    - pip install zc.buildout
+    - pip install --upgrade zc.buildout>=2.2.1
     - buildout
 script:
     - ./bin/test
