@@ -4,8 +4,9 @@ python:
     - 2.7
     - 3.3
 install:
-    - pip install . --use-mirrors
+    - python bootstrap.py
+    - ./bin/buildout
 script:
-    - python setup.py test -q
+    - ./bin/test
 notifications:
     email: false
