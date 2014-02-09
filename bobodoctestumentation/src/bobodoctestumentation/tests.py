@@ -70,17 +70,18 @@ def get_port():
             s.close()
     raise RuntimeError("Can't find port")
 
-foo = renormalizing.RENormalizing([
-    (re.compile("u('.*?')"), r"\1"),
-    (re.compile('u(".*?")'), r"\1"),
-    ])
 
 def test_suite():
     options = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE |
                doctest.IGNORE_EXCEPTION_DETAIL)
+    unicode_literal_normalizer = renormalizing.RENormalizing([
+        (re.compile("u('.*?')"), r"\1"),
+        (re.compile('u(".*?")'), r"\1"),
+        ])
     return unittest.TestSuite((
         manuel.testing.TestSuite(
-            manuel.doctest.Manuel(optionflags=options, checker=foo) +
+            manuel.doctest.Manuel(optionflags=options,
+                                  checker=unicode_literal_normalizer) +
             manuel.capture.Manuel(),
             'index.txt', 'more.txt',
             setUp=setup_intro),
@@ -89,7 +90,7 @@ def test_suite():
             'fswiki.test', 'fswikia.test', 'bobocalc.test', 'static.test',
             optionflags=options,
             setUp=setUp, tearDown=setupstack.tearDown,
-            checker=foo),
+            checker=unicode_literal_normalizer),
         doctest.DocFileSuite(
             'boboserver.test',
             optionflags=options,
