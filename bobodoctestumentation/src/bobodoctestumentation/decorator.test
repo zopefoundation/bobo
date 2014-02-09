@@ -463,6 +463,18 @@ If a resource is defined in a class, it handles binding correctly.
      'headers': [],
      'status': 200}
 
+Resources can be transplanted (don't ask why):
+
+    >>> class C1(C):
+    ...    def m1(self):
+    ...        return 'm1'
+    >>> class C2(C1): pass
+    >>> C2.m1 = C.m1
+    >>> C2.m1
+    <unbound resource C.m1>
+    >>> C2().m1(None, 1)
+    'NoneType 99 1'
+
 subroute
 --------
 

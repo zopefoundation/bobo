@@ -644,7 +644,6 @@ class _UnboundHandler:
         self.im_class = class_
 
     def __get__(self, inst, class_):
-        self._check_args(args)
         if inst is None:
             return self
         return _BoundHandler(self.im_func, inst, self.im_class)
