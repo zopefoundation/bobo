@@ -209,7 +209,6 @@ Glossary
 .. glossary::
 
    :sorted:
-
    order
        The order in which a resource is searched relative to other
        resources.
