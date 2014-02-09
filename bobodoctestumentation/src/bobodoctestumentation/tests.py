@@ -18,6 +18,7 @@ import manuel.capture
 import manuel.doctest
 import manuel.testing
 import re
+import six
 import sys
 import types
 import unittest
@@ -41,7 +42,7 @@ def setup_intro(test):
             sys.modules[name] = types.ModuleType(name)
             setupstack.register(test, sys.modules.__delitem__, name)
         module = sys.modules[name]
-        exec src in module.__dict__
+        six.exec_(src, module.__dict__)
 
     test.globs['update_module'] = update_module
 
@@ -69,18 +70,30 @@ def get_port():
             s.close()
     raise RuntimeError("Can't find port")
 
+
 def test_suite():
+    options = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE |
+               doctest.IGNORE_EXCEPTION_DETAIL)
+    unicode_literal_normalizer = renormalizing.RENormalizing([
+        (re.compile("u('.*?')"), r"\1"),
+        (re.compile('u(".*?")'), r"\1"),
+        ])
     return unittest.TestSuite((
         manuel.testing.TestSuite(
-            manuel.doctest.Manuel() + manuel.capture.Manuel(),
+            manuel.doctest.Manuel(optionflags=options,
+                                  checker=unicode_literal_normalizer) +
+            manuel.capture.Manuel(),
             'index.txt', 'more.txt',
             setUp=setup_intro),
         doctest.DocFileSuite(
             'main.test', 'decorator.test',
             'fswiki.test', 'fswikia.test', 'bobocalc.test', 'static.test',
-            setUp=setUp, tearDown=setupstack.tearDown),
+            optionflags=options,
+            setUp=setUp, tearDown=setupstack.tearDown,
+            checker=unicode_literal_normalizer),
         doctest.DocFileSuite(
             'boboserver.test',
+            optionflags=options,
             setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown,
             checker=renormalizing.RENormalizing([
                 (re.compile('usage:'), 'Usage:'),

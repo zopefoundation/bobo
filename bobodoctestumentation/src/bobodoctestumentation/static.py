@@ -48,7 +48,8 @@ class File:
         if content_type is not None:
             response.content_type = content_type
         try:
-            response.body = open(self.path).read()
+            with open(self.path, "rb") as f:
+                response.body = f.read()
         except IOError:
             raise bobo.NotFound
 

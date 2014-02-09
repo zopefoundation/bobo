@@ -2,9 +2,13 @@ language: python
 python:
     - 2.6
     - 2.7
+    - 3.3
 install:
-    - pip install . --use-mirrors
+    - pip install --upgrade setuptools>=1.4
+    - pip install --upgrade zc.buildout>=2.2.1
+    - buildout bootstrap
+    - ./bin/buildout
 script:
-    - python setup.py test -q
+    - ./bin/test
 notifications:
     email: false

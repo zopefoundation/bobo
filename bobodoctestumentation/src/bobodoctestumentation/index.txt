@@ -95,9 +95,9 @@ you'll get the greeting::
     Hello world!
 
 .. -> expected_body
-  >>> expected_body = expected_body.strip()
+    >>> expected_body = expected_body.strip()
 
-    >>> app.get(url, status=200).body == expected_body
+    >>> app.get(url, status=200).text == expected_body
     True
 
 The URL we used to access the application was determined by the name
@@ -120,7 +120,7 @@ We'll do this by providing a URL path::
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
-    >>> app.get(url, status=200).body == expected_body
+    >>> app.get(url, status=200).text == expected_body
     True
 
 Here, we passed a path to the ``query`` decorator.  We used a '/'
@@ -143,7 +143,7 @@ given as form data::
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
-    >>> app.get(url, status=200).body == expected_body
+    >>> app.get(url, status=200).text == expected_body
     True
 
 If a function accepts named arguments, then data will be
@@ -161,7 +161,7 @@ We'll get the output::
 .. -> expected_body
   >>> expected_body = expected_body.strip()
 
-    >>> app.get(url, status=200).body == expected_body
+    >>> app.get(url, status=200).text == expected_body
     True
 
 The ``query`` decorator will accept ``GET``, ``POST`` and ``HEAD``
@@ -186,18 +186,19 @@ provided in a query string as function arguments.
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
     >>> app.post('/', {'name': 'Bob'}, status=200)
-    <200 OK text/html body='Hello Bob!'>
+    <200 OK text/html body=...'Hello Bob!'>
     >>> app.put('/', {'name': 'Bob'}, status=200)
-    <200 OK text/html body='Hello Bob?'>
+    <200 OK text/html body=...'Hello Bob?'>
 
     >>> response = app.get(url, status=405)
     >>> response.headers['Allow']
     'POST, PUT'
-    >>> print response.body,
+    >>> print(response.text)
     <html>
     <head><title>Method Not Allowed</title></head>
     <body>Invalid request method: GET</body>
     </html>
+    <BLANKLINE>
 
 The ``query`` and ``post`` decorators are convenient when you want to just get
 user input passed as function arguments.  If you want a bit more
@@ -212,8 +213,8 @@ control, you can also get the request object by defining a
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
-    >>> app.get('/', status=200).body
-    'Hello world! (method=GET)'
+    >>> print(app.get('/', status=200).text)
+    Hello world! (method=GET)
 
 The request object gives full access to all of the form data, as well
 as other information, such as cookies and input headers.
@@ -233,8 +234,8 @@ callable::
 
     >>> update_module('helloapp', src)
     >>> app = webtest.TestApp(bobo.Application(bobo_resources='helloapp'))
-    >>> app.get('/?name=Bob', status=200).body
-    'Hello Bob!'
+    >>> print(app.get('/?name=Bob', status=200).text)
+    Hello Bob!
 
 The ``resource`` decorator always passes the request object as the first
 positional argument to the callable it's given.
@@ -307,9 +308,9 @@ for which we get the output::
     Hello Sally! My name is myapp.
 
 .. -> expected_body
-  >>> expected_body = expected_body.strip()
+    >>> expected_body = expected_body.strip()
 
-    >>> app.get(url).body == expected_body
+    >>> app.get(url).text == expected_body
     True
 
 We call these paths :term:`routes` because they use a syntax inspired
@@ -345,9 +346,9 @@ for which we get the output::
     Hello Sally! My name is Bobo.
 
 .. -> expected_body
-  >>> expected_body = expected_body.strip()
+    >>> expected_body = expected_body.strip()
 
-    >>> app.get(url).body == expected_body
+    >>> app.get(url).text == expected_body
     True
 
 Note, however, if we use the URL::
@@ -364,7 +365,7 @@ we get the output::
 .. -> expected_body
   >>> expected_body = expected_body.strip()
 
-    >>> app.get(url).body == expected_body
+    >>> app.get(url).text == expected_body
     True
 
 Placeholders must be legal Python identifiers.  A placeholder may be
@@ -394,7 +395,7 @@ And get::
 .. -> expected_body
   >>> expected_body = expected_body.strip()
 
-    >>> app.get(url).body == expected_body
+    >>> app.get(url).text == expected_body
     True
 
 If the placeholder is optional::
@@ -413,20 +414,20 @@ Then we can use a URL like::
     http://localhost:8080/greeters?name=Sally
 
 .. -> url
-  >>> url = url.strip()
+    >>> url = url.strip()
 
-    >>> app.get(url, status=200).body
-    'Hello Sally! My name is Bobo.'
+    >>> print(app.get(url, status=200).text)
+    Hello Sally! My name is Bobo.
 
 or::
 
     http://localhost:8080/greeters/jim.html?name=Sally
 
 .. -> url
-  >>> url = url.strip()
+    >>> url = url.strip()
 
-    >>> app.get(url, status=200).body
-    'Hello Sally! My name is jim.'
+    >>> print(app.get(url, status=200).text)
+    Hello Sally! My name is jim.
 
 
 Subroutes
@@ -508,7 +509,7 @@ With this example, if we visit::
 .. -> url
   >>> url = url.strip()
 
-    >>> print app.get(url).body
+    >>> print(app.get(url).text)
     <BLANKLINE>
             id: 1
             name: Bob
@@ -592,7 +593,7 @@ instance. Let's look at the Folder class::
     ...         ).headers['location']
     'http://localhost:8080/employees/1/'
 
-    >>> print app.get('http://localhost:8080/employees/1/', status=200).body,
+    >>> print(app.get('http://localhost:8080/employees/1/', status=200).text)
     <BLANKLINE>
             id: 1
             name: Bob
@@ -616,9 +617,9 @@ which outputs::
     I like to ski.
 
 .. -> expected_body
-  >>> expected_body = expected_body.strip()
+    >>> expected_body = expected_body.strip()
 
-    >>> app.get(url).body == expected_body
+    >>> app.get(url).text == expected_body
     True
 
 The URL is matched in multiple steps:

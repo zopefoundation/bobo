@@ -10,7 +10,7 @@ rout data when there is. Although it is internal, it provides a nice
 place to test the route handling. We'll use a helper function to try
 it.
 
-    >>> import bobo, pprint, webob
+    >>> import bobo, pprint, six, webob
     >>> def test(route, url, partial=False):
     ...     match = bobo._compile_route(route, partial)
     ...     request = webob.Request.blank(url)
@@ -19,19 +19,19 @@ it.
     ...        return
     ...     if partial:
     ...        d, path = d
-    ...        print repr(path)
+    ...        print(repr(path))
     ...     if not d or len(d) == 1:
-    ...        print repr(d)
+    ...        print(repr(d))
     ...     else:
     ...        pprint.pprint(d, width=1)
-    ...     if not isinstance(partial, basestring):
+    ...     if not isinstance(partial, six.string_types):
     ...        return
     ...     match = bobo._compile_route(partial)
     ...     d = match(request, path)
     ...     if d is None:
     ...        return
     ...     if not d or len(d) == 1:
-    ...        print repr(d)
+    ...        print(repr(d))
     ...     else:
     ...        pprint.pprint(d, width=1)
 
@@ -59,11 +59,11 @@ Some things to note:
     {}
     >>> test('', '/')
     >>> test('', '/', partial=True)
-    u'/'
+    '/'
     {}
     >>> test('/', '/foo')
     >>> test('/', '/foo', partial=True)
-    u'foo'
+    'foo'
     {}
     >>> test('/foo', '/foo')
     {}
@@ -72,99 +72,99 @@ Some things to note:
     {}
     >>> test('/foo/', '/foo/bar')
     >>> test('/foo/', '/foo/bar', '/bar')
-    u'bar'
+    'bar'
     {}
     >>> test('/foo', '/foo/bar', '/bar')
-    u'/bar'
+    '/bar'
     {}
     {}
     >>> test('/:x', '')
     >>> test('/:x', '/')
-    {'x': u''}
+    {'x': ''}
     >>> test('/:x', '/a')
-    {'x': u'a'}
+    {'x': 'a'}
     >>> test('/:x', '/aa')
-    {'x': u'aa'}
+    {'x': 'aa'}
     >>> test('/:xx', '')
     >>> test('/:xx', '/')
-    {'xx': u''}
+    {'xx': ''}
     >>> test('/:xx', '/a')
-    {'xx': u'a'}
+    {'xx': 'a'}
     >>> test('/:xx', '/aa')
-    {'xx': u'aa'}
+    {'xx': 'aa'}
     >>> test('/zzz/:xx', '/zzz')
     >>> test('/zzz/:xx', '/zzz/')
-    {'xx': u''}
+    {'xx': ''}
     >>> test('/zzz/:xx', '/zzz/a')
-    {'xx': u'a'}
+    {'xx': 'a'}
     >>> test('/zzz/:xx', '/zzz/aa')
-    {'xx': u'aa'}
+    {'xx': 'aa'}
     >>> test('/:xx/:y', '/a')
     >>> test('/:xx/:y', '/a/')
-    {'xx': u'a',
-     'y': u''}
+    {'xx': 'a',
+     'y': ''}
     >>> test('/:xx/:y', '/a/b')
-    {'xx': u'a',
-     'y': u'b'}
+    {'xx': 'a',
+     'y': 'b'}
     >>> test('/zzz/:xx/www/:y', '/a/b')
     >>> test('/zzz/:xx/www/:y', '/zzz/aa/www/bb')
-    {'xx': u'aa',
-     'y': u'bb'}
+    {'xx': 'aa',
+     'y': 'bb'}
     >>> test('/zzz/:xx/www/:y.html', '/zzz/aa/www/bb.html')
-    {'xx': u'aa',
-     'y': u'bb'}
+    {'xx': 'aa',
+     'y': 'bb'}
     >>> test('/zzz/:xx/www/:yy.html', '/zzz/aa/www/b.html')
-    {'xx': u'aa',
-     'yy': u'b'}
+    {'xx': 'aa',
+     'yy': 'b'}
     >>> test('/zzz/:xx?/www/:yy.html', '/zzz/aa/www/b.html')
-    {'xx': u'aa',
-     'yy': u'b'}
+    {'xx': 'aa',
+     'yy': 'b'}
     >>> test('/zzz/:xx?/www/:yy.html', '/zzz/www/b.html')
-    {'yy': u'b'}
+    {'yy': 'b'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/qq/www')
-    {'xx': u'qq'}
+    {'xx': 'qq'}
     >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www')
     {}
     >>> test('/zzz/:xx?/:yy?.html', '/zzz')
     {}
     >>> test('/zzz/:xx?/:yy?.html', '/zzz/')
-    {'xx': u''}
+    {'xx': ''}
     >>> test('/zzz/:xx?/:yy?', '/zzz')
     {}
     >>> test('/zzz/:xx?/www/:yy?.html', '/zzz/www/')
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www')
-    {'xx': u'aaa'}
+    {'xx': 'aaa'}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/')
-    {'xx': u'aaa',
-     'yy': u''}
+    {'xx': 'aaa',
+     'yy': ''}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc')
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/ccc')
-    u'/ccc'
-    {'xx': u'aaa',
-     'yy': u'bbb'}
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
     {}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo')
-    u'/ccc'
-    {'xx': u'aaa',
-     'yy': u'bbb'}
-    {'foo': u'ccc'}
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
+    {'foo': 'ccc'}
     >>> test('/zzz/:xx/www/:yy?', '/zzz/aaa/www/bbb/ccc', '/:foo/:bar?')
-    u'/ccc'
-    {'xx': u'aaa',
-     'yy': u'bbb'}
-    {'foo': u'ccc'}
+    '/ccc'
+    {'xx': 'aaa',
+     'yy': 'bbb'}
+    {'foo': 'ccc'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc')
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/bbb/ccc', '/ccc')
-    u'/bbb/ccc'
-    {'xx': u'aaa'}
+    '/bbb/ccc'
+    {'xx': 'aaa'}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/ccc')
-    u'/ccc'
-    {'xx': u'aaa'}
+    '/ccc'
+    {'xx': 'aaa'}
     {}
     >>> test('/zzz/:xx/www/:yy?.html', '/zzz/aaa/www/ccc', '/:ccc')
-    u'/ccc'
-    {'xx': u'aaa'}
-    {'ccc': u'ccc'}
+    '/ccc'
+    {'xx': 'aaa'}
+    {'ccc': 'ccc'}
 
 resource
 --------
@@ -175,9 +175,9 @@ route.  It also provides automation of response creation.
     >>> @bobo.resource('/foo', method='GET')
     ... @bobo.resource('/:name', content_type='text/plain; charset=Latin-1')
     ... def hi(request, name=None):
-    ...     print 'request:'
-    ...     print str(request).replace('\r', '').rstrip()
-    ...     print '-----'
+    ...     print('request:')
+    ...     print(str(request).replace('\r', '').rstrip())
+    ...     print('-----')
     ...     return 'Hi %s.' % name
 
 As we can see, we can stack resources.  We can supply a content type.
@@ -189,13 +189,13 @@ We use resources by calling the result of calling bobo_response:
     ...            + '\n'.join('%s: %s' % (name, value)
     ...                        for (name, value) in sorted(response.headerlist))
     ...            + '\n\n'
-    ...            + response.body)
+    ...            + response.text)
 
-    >>> import webob, StringIO
+    >>> import webob, io
     >>> def call_resource(resource, url, input=None, env=None, **kw):
     ...     env = env or {}
     ...     if input:
-    ...         env['wsgi.input'] = StringIO.StringIO(input)
+    ...         env['wsgi.input'] = io.BytesIO(input.encode("utf-8"))
     ...         env['CONTENT_LENGTH'] = str(len(input))
     ...         env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
     ...         env['REQUEST_METHOD'] = 'POST'
@@ -205,8 +205,10 @@ We use resources by calling the result of calling bobo_response:
     ...             request, request.path_info, request.method)
     ...         if found is not None:
     ...             print_response(found)
-    ...     except bobo.BoboException, v:
-    ...         print v.__class__.__name__+':'
+    ...     except (bobo.MissingFormVariable, bobo.MethodNotAllowed) as exc:
+    ...         print("Raised %s: %s" % (exc.__class__.__name__, exc,))
+    ...     except bobo.BoboException as v:
+    ...         print(v.__class__.__name__+':')
     ...         pprint.pprint(v.__dict__, width=1)
 
     >>> call_resource(hi, '/foo')
@@ -233,7 +235,7 @@ order.
     Host: localhost:80
     -----
     BoboException:
-    {'body': u'Hi bar.',
+    {'body': 'Hi bar.',
      'content_type': 'text/plain; charset=Latin-1',
      'headers': [],
      'status': 200}
@@ -241,9 +243,7 @@ order.
 Here, we matched the second caller and passed the name.
 
     >>> call_resource(hi, '/foo', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    MethodNotAllowed: Allowed: 'GET'
+    Raised MethodNotAllowed: Allowed: 'GET'
 
 This time, we matched the first resource, but the method was invalid,
 so a MethodNotAllowed exception was raised.
@@ -281,7 +281,7 @@ encoded as json:
 
     >>> @bobo.resource('/:type?', content_type='application/json')
     ... def uni(request, type=None):
-    ...     val = u'\uaaaa'
+    ...     val = u'foo'
     ...     if type=='array':
     ...         return [val]
     ...     elif type == 'ob':
@@ -297,14 +297,14 @@ encoded as json:
 
     >>> call_resource(uni, '/array')
     BoboException:
-    {'body': [u'\uaaaa'],
+    {'body': ['foo'],
      'content_type': 'application/json',
      'headers': [],
      'status': 200}
 
     >>> call_resource(uni, '/ob')
     BoboException:
-    {'body': {'val': u'\uaaaa'},
+    {'body': {'val': 'foo'},
      'content_type': 'application/json',
      'headers': [],
      'status': 200}
@@ -313,9 +313,9 @@ If a callable returns a response, then we don't get a bobo exception:
 
     >>> @bobo.resource('/:name', content_type='text/plain; charset=Latin-1')
     ... def hi(request, name=None):
-    ...     print 'request:'
-    ...     print str(request).replace('\r', '')
-    ...     print '-----'
+    ...     print('request:')
+    ...     print(str(request).replace('\r', ''))
+    ...     print('-----')
     ...     return webob.Response('Hi %s.' % name)
 
     >>> call_resource(hi, '/bar')
@@ -341,14 +341,14 @@ request query and/or post data as function parameters.
 
     >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3')
     BoboException:
-    {'body': u'Request b 3 None',
+    {'body': 'Request b 3 None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3')
     BoboException:
-    {'body': u'Request 2 3 None',
+    {'body': 'Request 2 3 None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -361,7 +361,7 @@ The query decorators will also use form data:
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5')
     BoboException:
-    {'body': u"Request 2 [u'3', u'4'] 5",
+    {'body': "Request 2 ['3', '4'] 5",
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -369,9 +369,7 @@ The query decorators will also use form data:
 If parameters are ommitted, we'll get a MissingFormVariable error:
 
     >>> call_resource(foo, '/a/b')
-    Traceback (most recent call last):
-    ...
-    MissingFormVariable: y
+    Raised MissingFormVariable: y
 
 The post decorator will *only* use form data:
 
@@ -381,22 +379,20 @@ The post decorator will *only* use form data:
 
     >>> call_resource(foo, '/a?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
     BoboException:
-    {'body': u'Request 6 4 5',
+    {'body': 'Request 6 4 5',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(foo, '/a/b?bobo_request=1&x=2&y=3', 'y=4&z=5&x=6')
     BoboException:
-    {'body': u'Request b 4 5',
+    {'body': 'Request b 4 5',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(foo, '/a/b', 'z=1')
-    Traceback (most recent call last):
-    ...
-    MissingFormVariable: y
+    Raised MissingFormVariable: y
 
 Resources as methods
 --------------------
@@ -427,7 +423,7 @@ If a resource is defined in a class, it handles binding correctly.
     'NoneType 99 1'
 
     >>> C().m1 # doctest: +ELLIPSIS
-    <bound resource C.m1 of <__builtin__.C instance at ...>>
+    <bound resource C.m1 of ...>
 
     >>> C().m1(None, 1)
     'NoneType 99 1'
@@ -436,7 +432,7 @@ If a resource is defined in a class, it handles binding correctly.
 
     >>> call_resource(C().m1, '/a/b')
     BoboException:
-    {'body': u'Request 99 b',
+    {'body': 'Request 99 b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -453,7 +449,7 @@ If a resource is defined in a class, it handles binding correctly.
     '99 1 2'
 
     >>> C().m2 # doctest: +ELLIPSIS
-    <bound resource C.m2 of <__builtin__.C instance at ...>>
+    <bound resource C.m2 of ...>
 
     >>> C().m2(1, 2)
     '99 1 2'
@@ -462,10 +458,22 @@ If a resource is defined in a class, it handles binding correctly.
 
     >>> call_resource(C().m2, '/b/b?z=3')
     BoboException:
-    {'body': u'99 b 3',
+    {'body': '99 b 3',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
+
+Resources can be transplanted (don't ask why):
+
+    >>> class C1(C):
+    ...    def m1(self):
+    ...        return 'm1'
+    >>> class C2(C1): pass
+    >>> C2.m1 = C.m1
+    >>> C2.m1
+    <unbound resource C.m1>
+    >>> C2().m1(None, 1)
+    'NoneType 99 1'
 
 subroute
 --------
@@ -474,13 +482,13 @@ The subroute decorator is used with a factory that returns a resource.
 
     >>> @bobo.resource('/foo')
     ... def hi(request, name=None):
-    ...     print 'request:'
-    ...     print str(request).replace('\r', '')
-    ...     print '-----'
+    ...     print('request:')
+    ...     print(str(request).replace('\r', ''))
+    ...     print('-----')
     ...     return 'Hi %s.' % name
 
     >>> def sub1(request, first):
-    ...     print 'sub1', first
+    ...     print('sub1 %s' % first)
     ...     return hi
     >>> sub1 = bobo.subroute('/:first')(sub1)
 
@@ -507,7 +515,7 @@ bobo_response method.
     >>> call_resource(C, '/x/a/b')
     Traceback (most recent call last):
     ...
-    AttributeError: C instance has no attribute 'bobo_response'
+    AttributeError: ... has no attribute 'bobo_response'
 
 C doesn't have a bobo_response method. We can use scan_class to
 give it one:
@@ -516,7 +524,7 @@ give it one:
     True
     >>> call_resource(C, '/x/a/b')
     BoboException:
-    {'body': u'Request 99 b',
+    {'body': 'Request 99 b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -542,14 +550,14 @@ subroute.
 
     >>> call_resource(C, '/pre/a/b')
     BoboException:
-    {'body': u'Request pre b',
+    {'body': 'Request pre b',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pro/b/c?z=1')
     BoboException:
-    {'body': u'pro c 1',
+    {'body': 'pro c 1',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
@@ -581,41 +589,37 @@ Scanning classes with duplicate routes
 
     >>> call_resource(C, '/pre')
     BoboException:
-    {'body': u'B.get GET pre None',
+    {'body': 'B.get GET pre None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre', method='POST')
     BoboException:
-    {'body': u'C.post POST pre None',
+    {'body': 'C.post POST pre None',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    MethodNotAllowed: Allowed: 'GET', 'POST'
+    Raised MethodNotAllowed: Allowed: 'GET', 'POST'
 
     >>> call_resource(C, '/pre/a')
     BoboException:
-    {'body': u'B.gety GET pre a',
+    {'body': 'B.gety GET pre a',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre/a', method='POST')
     BoboException:
-    {'body': u'C.posty POST pre a',
+    {'body': 'C.posty POST pre a',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}
 
     >>> call_resource(C, '/pre/a', method='HEAD')
-    Traceback (most recent call last):
-    ...
-    MethodNotAllowed: Allowed: 'GET', 'POST'
+    Raised MethodNotAllowed: Allowed: 'GET', 'POST'
 
 subroutes don't screw up other uses of a class
 ----------------------------------------------
@@ -820,14 +824,14 @@ subroute factory can return None
 
     >>> @bobo.subroute
     ... def traverse(request):
-    ...     print 'traverse'
+    ...     print('traverse')
 
     >>> call_resource(traverse, '/traverse/x')
     traverse
 
     >>> class Traverse(object):
     ...     def __new__(class_, request):
-    ...         print 'Traverse'
+    ...         print('Traverse')
     >>> Traverse = bobo.subroute(Traverse)
 
     >>> call_resource(Traverse, '/Traverse/x')
@@ -838,13 +842,13 @@ check caching of handler setup
 
     >>> original_make_bobo_handle = bobo._make_bobo_handle
     >>> def test_make_bobo_handle(*args):
-    ...     print '_make_bobo_handle', args[0].__name__
+    ...     print('_make_bobo_handle %s' % args[0].__name__)
     ...     return original_make_bobo_handle(*args)
     >>> bobo._make_bobo_handle = test_make_bobo_handle
 
     >>> original_compile_route = bobo._compile_route
     >>> def test_compile_route(*args):
-    ...     print '_compile_route', args[0]
+    ...     print('_compile_route %s' % args[0])
     ...     return original_compile_route(*args)
     >>> bobo._compile_route = test_compile_route
 
@@ -884,7 +888,7 @@ check we don't match within path segment prefixes
     >>> call_resource(Events, '/eventswaaa')
     >>> call_resource(Events, '/events/1')
     BoboException:
-    {'body': u'id 1',
+    {'body': 'id 1',
      'content_type': 'text/html; charset=UTF-8',
      'headers': [],
      'status': 200}

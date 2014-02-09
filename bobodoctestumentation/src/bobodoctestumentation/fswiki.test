@@ -9,7 +9,7 @@ File-system wiki
     ...   directory='docs',
     ...   ))
 
-    >>> print app.get('/')
+    >>> print(app.get('/'))
     Response: 200 OK
     Content-Type: text/html; charset=UTF-8
     <html><head><title>Bobo Wiki</title></head><body>
@@ -17,7 +17,7 @@ File-system wiki
         <hr />
         </body></html>
 
-    >>> print app.get('/front') # doctest: +ELLIPSIS
+    >>> print(app.get('/front'))
     Response: 200 OK
     Content-Type: text/html; charset=UTF-8
     <html>
@@ -32,20 +32,20 @@ File-system wiki
       </body>
     </html>
 
-    >>> print app.post('/front', 'body=sometext')
+    >>> print(app.post('/front', 'body=sometext'))
     Response: 303 See Other
     Content-Type: text/html; charset=UTF-8
     Location: http://localhost/front
     See http://localhost/front
 
-    >>> print app.get('/front')
+    >>> print(app.get('/front'))
     Response: 200 OK
     Content-Type: text/html; charset=UTF-8
     <html><head><title>front</title></head><body>
             front (<a href="front?edit=1">edit</a>)
             <hr />sometext</body></html>
 
-    >>> print app.get('/')
+    >>> print(app.get('/'))
     Response: 200 OK
     Content-Type: text/html; charset=UTF-8
     <html><head><title>Bobo Wiki</title></head><body>
