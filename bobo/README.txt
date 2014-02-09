@@ -22,11 +22,14 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
-1.1.0 unreleased
+2.0.0 2014-02-09
 ----------------
+
+- Added Python 3 support!
 
 - Add decorators to define resource handlers for additional HTTP methods
   (`put`, `get`, `head`, `delete`, `options`).
+
 - With the addition of `bobo.put`, `bobo.post` was changed to no longer
   handle PUT requests.
 
