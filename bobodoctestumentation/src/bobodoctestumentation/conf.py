@@ -2,8 +2,8 @@
 
 # General information about the project.
 project = u'bobo'
-version = '0.2'
-copyright = u'2009, Jim Fulton'
+version = '2.0.0'
+copyright = u'2009-2014, Jim Fulton'
 
 #
 # bobo documentation build configuration file, created by
