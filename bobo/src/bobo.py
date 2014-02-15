@@ -50,6 +50,8 @@ _default_content_type = 'text/html; charset=UTF-8'
 
 _json_content_type = re.compile('application/json;?').match
 
+getargspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
+
 class Application:
     """Create a WSGI application.
 
@@ -1172,7 +1174,7 @@ def _make_bobo_handle(func, original, check, content_type):
     return handle
 
 def _make_caller(obj, paramsattr):
-    spec = inspect.getargspec(obj)
+    spec = getargspec(obj)
     nargs = nrequired = len(spec.args)
     if spec.defaults:
         nrequired -= len(spec.defaults)
