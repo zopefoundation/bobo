@@ -115,7 +115,7 @@ Bobo provides a way to explicitly configure the routes as part of
 configuration. When you specify resources, you can control the order
 resources are searched and override the routes used.
 
-The ``bobo_response`` takes a number of resources separated by
+The ``bobo_resources`` option takes a number of resources separated by
 newlines. Resources take one of 4 forms:
 
 modulename
