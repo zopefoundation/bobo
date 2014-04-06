@@ -532,6 +532,79 @@ This example also illustrates that, rather than passing strings to the
 ``resources``, ``reroute`` and ``preroute`` functions, we can pass
 objects directly.
 
+Creating bobo-based WSGI applications from Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usually, bobo applications are created using the bobo development
+server or through a PasteDeployment configuration.  You can also
+create applications in Python using the ``bobo.Application``
+constructor. You call the constructor with keyword arguments:
+
+bobo_resources
+  The bobo resources to be used in the application
+
+  This is either a string defining resources, or an iterable of
+  modules or resource objects.
+
+bobo_configuration
+  A list of configuration functions.
+
+  This is either a string consistning whitespace-delimited list of
+  configuration callable names, or an iterable of callables. The
+  callables will be called with the keyword arguments passed to
+  ``bobo.Application``. This allows you to pass configuration options
+  when defining an application.
+
+bobo_errors
+  A custom error-handler object.  This is either a string name, of the
+  form ``'modulename:expression'``, or a Python object defining one or
+  more of the error handling functions.
+
+bobo_handle_exceptions
+  A boolean flag indicating whether bobo should handle uncaught
+  application exceptions. If set to ``False`` or ``'false'``, then
+  bobo won't catch exceptions. This is useful if you want middleware
+  to handle exceptions.
+
+Here's a somewhat contrived example that illustrates creating an
+application object from Python, passing objects rather than strings::
+
+    import bobo, webob
+
+    def config(config):
+        global configured_name
+        configured_name = config['name']
+
+    @bobo.get('/hi')
+    def hi():
+        return configured_name
+
+    class Errors:
+        @classmethod
+        def not_found(self, request, method):
+            return webob.Response("missing", 404)
+
+    app = bobo.Application(
+        bobo_resources=[hi],
+        bobo_configure=[config],
+        bobo_errors=Errors,
+        name="welcome",
+        )
+
+.. -> src
+
+    >>> exec(src)
+    >>> app = webtest.TestApp(app)
+    >>> print(app.get('/hi'))
+    Response: 200 OK
+    Content-Type: text/html; charset=UTF-8
+    welcome
+
+    >>> print(app.get('/ho', status=404))
+    Response: 404 Not Found
+    Content-Type: text/html; charset=UTF-8
+    missing
+
 Error response generation
 -------------------------
 
@@ -742,9 +815,11 @@ use an expression to specify the errors object.
 Uncaught exceptions
 ~~~~~~~~~~~~~~~~~~~
 
-Normally, bobo does not let uncaught exceptions propagate; however,
-if the `x-wsgiorg.throw_errors` key is present in the environment,
-any uncaught exceptions will be raised.
+Normally, bobo does not let uncaught exceptions propagate; however, if
+the ``bobo_handle_exceptions`` option is set to ``False`` (or
+``'false'``) or if a request environment has the key
+`x-wsgiorg.throw_errors`, any uncaught exceptions will be raised.
+This is useful if you want WSGI middleware to handle exceptions.
 
 If you want to provide custom handling of uncaught exceptions,
 you can include an ``exception`` method in the object you
@@ -802,6 +877,20 @@ give to ``bobo_errors``.
     >>> bobo.log.removeHandler(handler)
 
     >>> app.get("/bad.html", extra_environ={"x-wsgiorg.throw_errors": "1"})
+    Traceback (most recent call last):
+    ...
+    TypeError: ...
+
+    >>> app = webtest.TestApp(bobo.Application(
+    ...     bobo_resources='badapp', bobo_handle_exceptions=False))
+    >>> app.get("/bad.html")
+    Traceback (most recent call last):
+    ...
+    TypeError: ...
+
+    >>> app = webtest.TestApp(bobo.Application(
+    ...     bobo_resources='badapp', bobo_handle_exceptions='false'))
+    >>> app.get("/bad.html")
     Traceback (most recent call last):
     ...
     TypeError: ...
