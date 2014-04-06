@@ -22,6 +22,20 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+2.1.0 2014-04-06
+----------------
+
+- The ``bobo.Application`` constructor now accepts objects as well as
+  strings for the bobo options. This makes application definition from
+  Python a bit cleaner.
+
+- A new ``bobo_handle_exceptions`` options makes it easy to tell bobo
+  not to catch application exceptions.  This is helpful is you're
+  using WSGI middleware to handle exceptions.
+
+- The object provided to ``bobo_errors`` option can now provide a
+  subset of error handlers.
+
 2.0.0 2014-02-09
 ----------------
 

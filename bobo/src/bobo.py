@@ -121,7 +121,7 @@ class Application:
 
     Bobo also used the following options:
 
-    bobo_configuration
+    bobo_configure
        Specify one or more (whitespace-delimited) callables to be
        called with the configuration data passed to the application.
 
@@ -155,6 +155,15 @@ class Application:
           exc_info.  This method is optional.  Bobo's default behavior
           is to simply re-raise the exception.
 
+    bobo_handle_exceptions
+        Boolean indicating whether bobo should catch application exceptions.
+
+        This defaults to True. It should be set to false if WSGI
+        middleware should handle exceptions.
+
+        If provides as a string (through configuration), it should be
+        either 'true' or 'false'.
+
     """
 
     def __init__(self, DEFAULT=None, **config):
@@ -164,28 +173,44 @@ class Application:
             config = DEFAULT
 
         self.config = config
-        for name in filter(None, _uncomment(config, 'bobo_configure').split()):
-            _get_global(name)(config)
 
-        bobo_errors = _uncomment(config, 'bobo_errors')
-        if bobo_errors:
-            if ':' in bobo_errors:
-                bobo_errors = _get_global(bobo_errors)
+        bobo_configure = config.get('bobo_configure', '')
+        if isinstance(bobo_configure, six.string_types):
+            bobo_configure = (
+                _get_global(name)
+                for name in filter(None, _uncomment(bobo_configure).split())
+                )
+        for configure in bobo_configure:
+            configure(config)
+
+        bobo_errors = config.get('bobo_errors')
+        if bobo_errors is not None:
+            if isinstance(bobo_errors, six.string_types):
+                bobo_errors = _uncomment(bobo_errors)
+                if ':' in bobo_errors:
+                    bobo_errors = _get_global(bobo_errors)
+                else:
+                    bobo_errors = _import(bobo_errors)
+
+            _maybe_copy(bobo_errors, 'not_found', self)
+            _maybe_copy(bobo_errors, 'method_not_allowed', self)
+            _maybe_copy(bobo_errors, 'missing_form_variable', self)
+            _maybe_copy(bobo_errors, 'exception', self)
+
+        bobo_resources = config.get('bobo_resources', '')
+        if isinstance(bobo_resources, six.string_types):
+            bobo_resources = _uncomment(bobo_resources, True)
+            if bobo_resources:
+                self.handlers = _route_config(bobo_resources)
             else:
-                bobo_errors = _import(bobo_errors)
-            self.not_found = bobo_errors.not_found
-            self.method_not_allowed = bobo_errors.method_not_allowed
-            self.missing_form_variable = bobo_errors.missing_form_variable
-            try:
-                self.exception = bobo_errors.exception
-            except AttributeError:
-                pass
-
-        bobo_resources = _uncomment(config, 'bobo_resources', True)
-        if bobo_resources:
-            self.handlers = _route_config(bobo_resources)
+                raise ValueError("Missing bobo_resources option.")
         else:
-            raise ValueError("Missing bobo_resources option.")
+            self.handlers = [r.bobo_response for r in bobo_resources]
+
+        handle_exceptions = config.get('bobo_handle_exceptions', True)
+        if isinstance(handle_exceptions, six.string_types):
+            handle_exceptions = handle_exceptions.lower() == 'true'
+        self.reraise_exceptions = not handle_exceptions
 
     def bobo_response(self, request, path, method):
         try:
@@ -210,7 +235,9 @@ class Application:
         except bbbbad_errors:
             raise
         except Exception as exc:
-            if request.environ.get("x-wsgiorg.throw_errors"):
+            if (self.reraise_exceptions or
+                request.environ.get("x-wsgiorg.throw_errors")
+                ):
                 raise
             return self.exception(request, method, sys.exc_info())
 
@@ -388,15 +415,18 @@ def _make_br_function_by_methods(route, by_method):
 
     return bobo_response
 
-def _uncomment(config, name, split=False):
-    str = config.get(name, '')
+def _uncomment(text, split=False):
     result = list(filter(None, (
         line.split('#', 1)[0].strip()
-        for line in str.strip().split('\n')
+        for line in text.strip().split('\n')
         )))
     if split:
         return result
     return '\n'.join(result)
+
+def _maybe_copy(ob1, name, ob2):
+    if hasattr(ob1, name):
+        setattr(ob2, name, getattr(ob1, name))
 
 class _MultiResource(list):
     def bobo_response(self, request, path, method):
