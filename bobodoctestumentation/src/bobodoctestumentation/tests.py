@@ -15,6 +15,7 @@
 from zope.testing import doctest, setupstack, renormalizing
 import bobo
 import manuel.capture
+import manuel.codeblock
 import manuel.doctest
 import manuel.testing
 import re
@@ -78,7 +79,7 @@ def test_suite():
         (re.compile("u('.*?')"), r"\1"),
         (re.compile('u(".*?")'), r"\1"),
         ])
-    return unittest.TestSuite((
+    suite = unittest.TestSuite((
         manuel.testing.TestSuite(
             manuel.doctest.Manuel(optionflags=options,
                                   checker=unicode_literal_normalizer) +
@@ -101,3 +102,10 @@ def test_suite():
                 ])
             ),
         ))
+    if not six.PY2:
+        suite.addTest(manuel.testing.TestSuite(
+            manuel.doctest.Manuel() + manuel.codeblock.Manuel(),
+            "annotations.test",
+            setUp=setUp,
+            tearDown=setupstack.tearDown))
+    return suite
