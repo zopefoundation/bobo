@@ -127,7 +127,10 @@ class Reload:
         self.mtimes = mtimes = {}
         for name in modules.split():
             module = sys.modules[name]
-            mtimes[name] = (module.__file__, os.stat(module.__file__).st_mtime)
+            filename = module.__file__
+            if filename[-4:] in (".pyc", ".pyo"):
+                filename = filename[:-1]
+            mtimes[name] = (filename, os.stat(filename).st_mtime)
 
     def __call__(self, environ, start_response):
         for name, (path, mtime) in sorted(six.iteritems(self.mtimes)):
