@@ -22,6 +22,11 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+2.1.1 2014-07-06
+----------------
+
+- Fixed: Reloading modules sometimes failed
+
 2.1.0 2014-04-06
 ----------------
 
