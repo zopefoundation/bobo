@@ -411,7 +411,7 @@ def _make_br_function_by_methods(route, by_method):
 
     route_data = _compile_route(route)
 
-    def bobo_response_by_method(request, path, method):
+    def bobo_response_function_by_method(request, path, method):
         handler = by_method.get(method)
         if handler is None:
             handler = by_method.get(None)
@@ -423,7 +423,7 @@ def _make_br_function_by_methods(route, by_method):
 
         return handler(request, path, method)
 
-    return bobo_response_by_method
+    return bobo_response_function_by_method
 
 def _uncomment(text, split=False):
     result = list(filter(None, (
@@ -1440,7 +1440,7 @@ def scan_class(class_):
 
         handlers.append(_make_br_method_for_name(name))
 
-    def bobo_response(self, request, path, method):
+    def instance_bobo_response(self, request, path, method):
         allowed = set()
         for handler in handlers:
             try:
@@ -1455,9 +1455,9 @@ def scan_class(class_):
 
     old = class_.__dict__.get('bobo_response')
     if isinstance(old, _subroute_class_method):
-        old.inst_func = bobo_response
+        old.inst_func = instance_bobo_response
     else:
-        class_.bobo_response = bobo_response
+        class_.bobo_response = instance_bobo_response
 
     return class_
 
