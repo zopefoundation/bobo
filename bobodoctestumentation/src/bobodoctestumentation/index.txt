@@ -666,6 +666,10 @@ You can specify one or more methods when using the ``resource``,
 
     >>> update_module('helloapp', src)
 
+In addition, there are other decordators, ``get``, ``head``, ``put``,
+``delete``, and ``options`` that define resources that accept the
+corresponding HTTP methods.
+
 If multiple resources (resource, query, or post) in a module or class
 have the same route strings, the resource used will be selected based
 on both the route and the methods allowed. (If multiple resources match
@@ -712,6 +716,13 @@ a request, the first one defined will be used [#order]_.)
 The ability to provide handlers for specific methods provides support
 for the `REST architectural style
 <http://en.wikipedia.org/wiki/Representational_State_Transfer>`_.
+
+JSON Request Bodies
+===================
+
+If you use a JSON request body, with content type
+``application/json``, defining a JSON object, bobo will pass
+properties from the JSON body as resource function arguments.
 
 .. _configuration:
 

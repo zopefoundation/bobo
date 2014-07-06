@@ -1223,11 +1223,13 @@ def _make_bobo_handle(func, original, check, content_type):
 
     return handle
 
+_no_jget = {}.get
 def _make_caller(obj, paramsattr):
     spec = getargspec(obj)
     nargs = nrequired = len(spec.args)
     if spec.defaults:
         nrequired -= len(spec.defaults)
+    no_jget = _no_jget
 
     # XXX maybe handle f(..., **kw)?
 
@@ -1235,6 +1237,9 @@ def _make_caller(obj, paramsattr):
         request = pargs[-1]
         pargs = pargs[:-1] # () or (self, )
         params = getattr(request, paramsattr)
+        rget = route.get
+        pget = params.getall
+        jget = 0
         kw = {}
         for index in range(len(pargs), nargs):
             name = spec.args[index]
@@ -1242,15 +1247,23 @@ def _make_caller(obj, paramsattr):
                 kw[name] = request
                 continue
 
-            v = route.get(name)
+            v = rget(name)
             if v is None:
-                v = params.getall(name)
-                if not v:
-                    if index < nrequired:
-                        raise MissingFormVariable(name)
-                    continue
-                if len(v) == 1:
-                    v = v[0]
+                v = pget(name)
+                if v:
+                    if len(v) == 1:
+                        v = v[0]
+                else:
+                    if jget == 0:
+                        if request.content_type == 'application/json':
+                            jget = request.json.get
+                        else:
+                            jget = no_jget
+                    v = jget(name, request)
+                    if v is request:
+                        if index < nrequired:
+                            raise MissingFormVariable(name)
+                        continue
 
             kw[name] = v
 

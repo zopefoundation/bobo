@@ -197,7 +197,10 @@ We use resources by calling the result of calling bobo_response:
     ...     if input:
     ...         env['wsgi.input'] = io.BytesIO(input.encode("utf-8"))
     ...         env['CONTENT_LENGTH'] = str(len(input))
-    ...         env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+    ...         if input.startswith('{'):
+    ...             env['CONTENT_TYPE'] = 'application/json'
+    ...         else:
+    ...             env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
     ...         env['REQUEST_METHOD'] = 'POST'
     ...     request = webob.Request.blank(url, env, **kw)
     ...     try:
@@ -393,6 +396,29 @@ The post decorator will *only* use form data:
 
     >>> call_resource(foo, '/a/b', 'z=1')
     Raised MissingFormVariable: y
+
+Data can also be passed from JSON request data:
+
+    >>> @bobo.query('/')
+    ... def foo(bobo_request, x, y, z=None):
+    ...     return "%s %r %r %r" % (type(bobo_request).__name__, x, y, z)
+
+    >>> call_resource(foo, '/', '{"x":1, "y":2, "z":3}')
+    BoboException:
+    {'body': 'Request 1 2 3',
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
+You can mix url parameters and json data:
+
+    >>> call_resource(foo, '/?x=1', '{"y":2, "z":3}')
+    BoboException:
+    {'body': "Request u'1' 2 3",
+     'content_type': 'text/html; charset=UTF-8',
+     'headers': [],
+     'status': 200}
+
 
 Resources as methods
 --------------------
