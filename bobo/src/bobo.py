@@ -360,6 +360,13 @@ class BoboException(Exception):
         self.headers = headers or []
 
 def _scan_module(module_name):
+    # Scan a module for resources, and return a generator of resources
+    # in order. The order is defined by:
+    # - Order in source
+    # - Overridden order
+    # - route grouping
+    # In particular, wrt the last bullet, resources with the same route
+    # are grouped with the order of the first route.
     module = _import(module_name)
     bobo_response = getattr(module, 'bobo_response', None)
     if bobo_response is not None:
@@ -398,10 +405,13 @@ def _scan_module(module_name):
         yield bobo_response
 
 def _make_br_function_by_methods(route, by_method):
+    # Build a bobo_response function for one or more resources for a
+    # given route that define both route and methodd (standard
+    # resources, iow).
 
     route_data = _compile_route(route)
 
-    def bobo_response(request, path, method):
+    def bobo_response_by_method(request, path, method):
         handler = by_method.get(method)
         if handler is None:
             handler = by_method.get(None)
@@ -413,7 +423,7 @@ def _make_br_function_by_methods(route, by_method):
 
         return handler(request, path, method)
 
-    return bobo_response
+    return bobo_response_by_method
 
 def _uncomment(text, split=False):
     result = list(filter(None, (
@@ -1165,7 +1175,7 @@ def _compile_route(route, partial=False):
 
     if partial:
         match = re.compile(''.join(rpat)).match
-        def route_data(request, path, method=None):
+        def partial_route_data(request, path, method=None):
             m = match(path)
             if m is None:
                 return m
@@ -1174,6 +1184,8 @@ def _compile_route(route, partial=False):
                          if item[1] is not None),
                     path,
                     )
+
+        return partial_route_data
     else:
         match = re.compile(''.join(rpat)+'$').match
         def route_data(request, path, method=None):
@@ -1183,7 +1195,7 @@ def _compile_route(route, partial=False):
             return dict(item for item in six.iteritems(m.groupdict())
                         if item[1] is not None)
 
-    return route_data
+        return route_data
 
 def _make_bobo_handle(func, original, check, content_type):
 
@@ -1450,14 +1462,18 @@ def scan_class(class_):
     return class_
 
 def _make_br_method_for_name(name):
-    return (lambda self, request, path, method:
-            getattr(self, name).bobo_response(request, path, method)
-            )
+    def custom_bobo_response_method(self, request, path, method):
+        # Handle a resource that just has bobo_response, but no metadata
+        return getattr(self, name).bobo_response(request, path, method)
+    return custom_bobo_response_method
 
 def _make_br_method_by_methods(route, methods):
+    # Make a combined bobo_response for one or more standard instance
+    # resource that have a common route and are distinguished by the
+    # methods they support.
     route_data = _compile_route(route)
 
-    def bobo_response(self, request, path, method):
+    def bobo_response_method_by_methods(self, request, path, method):
         name = methods.get(method)
         if name is None:
             name = methods.get(None)
@@ -1469,7 +1485,7 @@ def _make_br_method_by_methods(route, methods):
 
         return getattr(self, name).bobo_response(request, path, method)
 
-    return bobo_response
+    return bobo_response_method_by_methods
 
 class MissingFormVariable(Exception):
     def __init__(self, name):
