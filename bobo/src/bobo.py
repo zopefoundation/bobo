@@ -587,6 +587,13 @@ class _cached_property(object):
 
 _ext_re = re.compile('/(\w+)').search
 class _Handler:
+    # Handlers wrap functions to provide the bobo resource interface.
+    #
+    # They handle requests by calling the undelying functions.
+    #
+    # An added complication is that handlers can be stacked, for
+    # example to use the same function for multiple routes. In
+    # addition, handlers can be called like the original function.
 
     partial = False
 
@@ -607,6 +614,7 @@ class _Handler:
         self.bobo_original = getattr(handler, 'bobo_original', handler)
         bobo_sub_find = getattr(handler, 'bobo_response', None)
         if bobo_sub_find is not None:
+            # We're stacked on another handler.
             self.bobo_sub_find = bobo_sub_find
 
         self.content_type = content_type
@@ -630,14 +638,14 @@ class _Handler:
         route_data = _compile_route(self.bobo_route, self.partial)
         methods = self.bobo_methods
         if methods is None:
-            return route_data
-
-        def match(request, path, method):
-            data = route_data(request, path)
-            if data is not None:
-                if method not in methods:
-                    raise MethodNotAllowed(methods)
-                return data
+            match = route_data
+        else:
+            def match(request, path, method):
+                data = route_data(request, path)
+                if data is not None:
+                    if method not in methods:
+                        raise MethodNotAllowed(methods)
+                    return data
 
         self.__dict__['match'] = match
         return match
