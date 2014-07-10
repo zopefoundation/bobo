@@ -2,7 +2,7 @@
 
 # General information about the project.
 project = u'bobo'
-version = '2.1.0'
+version = '2.2.0'
 copyright = u'2009-2014, Jim Fulton'
 
 #
