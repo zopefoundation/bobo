@@ -32,6 +32,12 @@ Change History
 
 - Bobo will pass resource function arguments from data in JSON request bodies.
 
+2.2.0 2014-07-10
+----------------
+
+- Bobo will now pass resource function arguments from data in JSON
+  request bodies.
+
 2.1.1 2014-07-06
 ----------------
 
