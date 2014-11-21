@@ -22,7 +22,13 @@ To learn more. visit: http://bobo.digicool.com
 Change History
 ==============
 
+2.3.0 2014-11-21
+----------------
+
 - Bobo will encode Unicode URLs for redirects automatically.
+
+2.2.0 2014-07-10
+----------------
 
 - Bobo will pass resource function arguments from data in JSON request bodies.
 
