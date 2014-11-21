@@ -1087,3 +1087,28 @@ with an Allow header.
     >>> app.request('/users/54321',
     ...     method="OPTIONS", status=405).headers["Allow"]
     'GET, HEAD, POST, PUT'
+
+
+Automatic encoding of redirect destinations
+-------------------------------------------
+
+Since URLs are often computed based on request data, it's easy for
+applications to generate Unicode URLs.  If we get this, UTF-8 is
+generated automatically::
+
+   import bobo
+
+   @bobo.get("/redirect-me")
+   def redirect():
+       return bobo.redirect(u"http://www.\u0113xample.com/")
+
+
+.. -> src
+
+    >>> update_module('redirection', src)
+    >>> app = webtest.TestApp(bobo.Application(
+    ...     bobo_resources='redirection'))
+
+    >>> response = app.get("/redirect-me", status=302)
+    >>> response.headers["location"]
+    'http://www.\xc4\x93xample.com/'
