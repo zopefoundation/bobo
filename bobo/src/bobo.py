@@ -334,9 +334,6 @@ _html_template = u"""<html>
 </html>
 """
 
-def _massage_headers(headers):
-    return headers
-
 def redirect(url, status=302, body=None,
              content_type="text/html; charset=UTF-8"):
     """Generate a response to redirect to a URL.
