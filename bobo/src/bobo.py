@@ -249,15 +249,8 @@ class Application:
             # Maybe middleware can be more tricky?
             request.charset = 'utf8'
 
-        def start_bobo_response(status, headers):
-            headers = list(headers or ())
-            for i, (k, v) in enumerate(headers):
-                if k.lower() == "location" and isinstance(v, unicode):
-                    headers[i] = k, v.encode("utf-8")
-            start_response(status, headers)
-
         return self.bobo_response(request, request.path_info, request.method
-                                  )(environ, start_bobo_response)
+                                  )(environ, start_response)
 
     def build_response(self, request, method, data):
         """Build a response object from raw data.
@@ -355,6 +348,8 @@ def redirect(url, status=302, body=None,
     """
     if body is None:
         body = u'See %s' % url
+    if isinstance(url, unicode):
+        url = url.encode('utf-8')
     response = webob.Response(status=status, headerlist=[('Location', url)])
     response.content_type = content_type
     response.unicode_body = body
