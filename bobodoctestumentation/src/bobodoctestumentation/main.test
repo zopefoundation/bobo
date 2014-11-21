@@ -336,3 +336,11 @@ Ordering
     >>> app = makeapp(bobo_resources='bobo.testmodule1')
     >>> app.get('/o').text
     'f3'
+
+
+Automatic encoding of redirect destinations
+-------------------------------------------
+
+    >>> response = bobo.redirect(u"http://www.\u0113xample.com/")
+    >>> response.headers["location"]
+    'http://www.\xc4\x93xample.com/'

@@ -1087,3 +1087,11 @@ with an Allow header.
     >>> app.request('/users/54321',
     ...     method="OPTIONS", status=405).headers["Allow"]
     'GET, HEAD, POST, PUT'
+
+
+Automatic encoding of redirect destinations
+-------------------------------------------
+
+Since URLs are often computed based on request data, it's easy for
+applications to generate Unicode URLs.  For this reason, unicode URL's
+passed to ``bobo.redirect`` are UTF-8 encoded.
