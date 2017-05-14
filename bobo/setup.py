@@ -61,5 +61,4 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
         ),
-    keywords=['web framework', 'web']
     )
