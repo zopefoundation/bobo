@@ -23,7 +23,7 @@ it.
     ...     if not d or len(d) == 1:
     ...        print(repr(d))
     ...     else:
-    ...        pprint.pprint(d, width=1)
+    ...        pprint.pprint(d)
     ...     if not isinstance(partial, six.string_types):
     ...        return
     ...     match = bobo._compile_route(partial)
@@ -33,7 +33,7 @@ it.
     ...     if not d or len(d) == 1:
     ...        print(repr(d))
     ...     else:
-    ...        pprint.pprint(d, width=1)
+    ...        pprint.pprint(d)
 
 We give a route and a url and an optional partial march flag.
 Non-partial routes must match the entire URL path. Partial matches can
@@ -212,7 +212,7 @@ We use resources by calling the result of calling bobo_response:
     ...         print("Raised %s: %s" % (exc.__class__.__name__, exc,))
     ...     except bobo.BoboException as v:
     ...         print(v.__class__.__name__+':')
-    ...         pprint.pprint(v.__dict__, width=1)
+    ...         pprint.pprint(v.__dict__)
 
     >>> call_resource(hi, '/foo')
     request:

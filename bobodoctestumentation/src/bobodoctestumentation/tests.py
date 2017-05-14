@@ -12,8 +12,9 @@
 #
 ##############################################################################
 
-from zope.testing import doctest, setupstack, renormalizing
+from zope.testing import setupstack, renormalizing
 import bobo
+import doctest
 import manuel.capture
 import manuel.codeblock
 import manuel.doctest

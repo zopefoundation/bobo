@@ -133,11 +133,11 @@ Let's publish a module with an error:
     ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
-    NameError: global name 'y' is not defined
+    NameError: ... 'y' is not defined
     post_mortem:
     ...
         return self.app(environ, start_response)
-    raised global name 'y' is not defined
+    raised ... 'y' is not defined
 
     >>> time.sleep(1.1)
 

@@ -39,7 +39,7 @@ authorization::
     Updated
 
     >>> import pprint
-    >>> pprint.pprint(helloapp.data, width=1)
+    >>> pprint.pprint(helloapp.data)
     {'foo': 'sometext',
      'x': 'some text'}
 
@@ -664,7 +664,7 @@ Let's look at an example. First, an ``errorsample`` module::
             "bad method "+method, status=405,
             headerlist=[
                 ('Allow', ', '.join(methods)),
-                ('Content-Type', 'text/plain'),
+                ('Content-Type', 'text/plain; charset=UTF-8'),
                 ])
 
     def missing_form_variable(request, method, name):
@@ -749,7 +749,7 @@ If we make a POST to the same URL, we'll get::
 
     Response: 405 Method Not Allowed
     Allow: GET
-    Content-Type: text/plain
+    Content-Type: text/plain; charset=UTF-8
     bad method POST
 
 .. -> expected4
@@ -775,7 +775,7 @@ that defines an class with methods for generating error responses::
                "bad method "+method, status=405,
                headerlist=[
                    ('Allow', ', '.join(methods)),
-                   ('Content-Type', 'text/plain'),
+                   ('Content-Type', 'text/plain; charset=UTF-8'),
                    ])
 
        def missing_form_variable(self, request, method, name):
@@ -801,7 +801,8 @@ use an expression to specify the errors object.
 
     >>> parser = configparser.ConfigParser()
     >>> parser.readfp(six.StringIO(ini2))
-    >>> app = webtest.TestApp(bobo.Application(dict(parser.items('app:main'))))
+    >>> app = webtest.TestApp(bobo.Application(
+    ...    dict(parser.items('app:main'), bobo_handle_exceptions=False)))
 
     >>> str(app.get(url1)).strip() == expected1
     True
