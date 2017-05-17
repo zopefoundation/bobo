@@ -345,8 +345,10 @@ def redirect(url, status=302, body=None,
     """
     if body is None:
         body = u'See %s' % url
-    if isinstance(url, unicode):
-        url = url.encode('utf-8')
+
+    # if isinstance(url, six.text_type):
+    #     url = url.encode('utf-8')
+
     response = webob.Response(status=status, headerlist=[('Location', url)])
     response.content_type = content_type
     response.unicode_body = body

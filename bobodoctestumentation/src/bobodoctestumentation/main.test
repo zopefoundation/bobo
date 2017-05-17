@@ -195,14 +195,14 @@ Configuration handlers
     >>> import pprint
     >>> def config_handler(d):
     ...     print('handler1')
-    ...     pprint.pprint(d, width=1)
+    ...     pprint.pprint(d)
 
     >>> bobo.testmodule1.config_handler = config_handler
 
     >>> import pprint
     >>> def config_handler(d):
     ...     print('handler2')
-    ...     pprint.pprint(d, width=1)
+    ...     pprint.pprint(d, width=99)
 
     >>> bobo.testmodule2.config_handler = config_handler
 
@@ -336,11 +336,3 @@ Ordering
     >>> app = makeapp(bobo_resources='bobo.testmodule1')
     >>> app.get('/o').text
     'f3'
-
-
-Automatic encoding of redirect destinations
--------------------------------------------
-
-    >>> response = bobo.redirect(u"http://www.\u0113xample.com/")
-    >>> response.headers["location"]
-    'http://www.\xc4\x93xample.com/'
