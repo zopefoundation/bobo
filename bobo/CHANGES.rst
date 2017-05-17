@@ -1,7 +1,7 @@
 Change History
 ==============
 
-2.4.0 (unreleased)
+2.4.0 (2017-05-17)
 ------------------
 
 - Dropped support for Python 2.6 and 3.3.
