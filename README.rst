@@ -1,1 +1,1 @@
-bobo/README.txt
+./bobo/README.rst

@@ -1,26 +1,15 @@
-Bobo
-====
-
-Bobo is a light-weight framework for creating WSGI web applications.
-
-Its goal is to be easy to use and remember.
-
-It addresses 2 problems:
-
-- Mapping URLs to objects
-
-- Calling objects to generate HTTP responses
-
-Bobo doesn't have a templating language, a database integration layer,
-or a number of other features that are better provided by WSGI
-middle-ware or application-specific libraries.
-
-Bobo builds on other frameworks, most notably WSGI and WebOb.
-
-To learn more. visit: http://bobo.digicool.com
-
 Change History
 ==============
+
+2.4.0 (unreleased)
+------------------
+
+- Dropped support for Python 2.6 and 3.3.
+
+- Added support for Python 3.4, 3.5, and 3.6 (mostly verifying that tests pass).
+
+- Don't encode text locations in redirects, as that breaks with
+  modern versions of WebOb.
 
 2.3.0 2014-11-21
 ----------------
@@ -79,7 +68,7 @@ Change History
   when a route doesn't handle a request method, but a later-matching
   route does.
 
-- Bobo now catches application exceptions and generares 500 responses
+- Bobo now catches application exceptions and generates 500 responses
   by default.
 
 0.2.3 2012-03-12
@@ -95,7 +84,7 @@ Bugs fixed:
 
 Bugs fixed:
 
-- An intended optmization to cache resource decorator computations
+- An intended optimization to cache resource decorator computations
   didn't work, making request handling slower than it should have
   been.
 

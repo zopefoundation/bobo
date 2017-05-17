@@ -28,6 +28,10 @@ debug = boboserver:Debug
 
 from setuptools import setup
 
+def read(fname):
+    with open(fname) as f:
+        return f.read()
+
 import sys
 
 setup(
@@ -37,9 +41,9 @@ setup(
     author_email = "jim@jimfulton.info",
     description = "Web application framework for the impatient",
     license = "ZPL 2.1",
-    keywords = "WSGI",
+    keywords = ["WSGI", "microframework"],
     url='http://bobo.readthedocs.io',
-    long_description=open('README.txt').read(),
+    long_description=read('README.rst') + '\n\n' + read('CHANGES.rst'),
     py_modules = ['bobo', 'boboserver'],
     package_dir = {'':'src'},
     install_requires = ["WebOb", "six"],
@@ -61,4 +65,5 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
         ),
+    zip_safe=False,
     )
