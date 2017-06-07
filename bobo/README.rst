@@ -17,4 +17,5 @@ middle-ware or application-specific libraries.
 
 Bobo builds on other frameworks, most notably WSGI and WebOb.
 
-To learn more. visit: http://bobo.digicool.com
+To learn more. visit: http://bobo.readthedocs.io
+
