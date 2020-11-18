@@ -1,7 +1,5 @@
 # Generated from:
 # https://github.com/zopefoundation/meta/tree/master/config/pure-python
-# Generated from:
-# https://github.com/zopefoundation/meta/tree/master/config/pure-python
 name: tests
 
 on:
