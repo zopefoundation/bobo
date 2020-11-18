@@ -19,3 +19,15 @@ recursive-include src *.rst
 recursive-include src *.txt
 recursive-include src *.xml
 recursive-include src *.zcml
+exclude docs
+prune docs
+recursive-include bobodoctestumentation *.bat
+recursive-include bobodoctestumentation *.html
+recursive-include bobodoctestumentation *.ini
+recursive-include bobodoctestumentation *.png
+recursive-include bobodoctestumentation *.py
+recursive-include bobodoctestumentation *.svg
+recursive-include bobodoctestumentation *.test
+recursive-include bobodoctestumentation *.txt
+recursive-include bobodoctestumentation Makefile
+include bobodoctestumentation/src/bobodoctestumentation/htpasswd
