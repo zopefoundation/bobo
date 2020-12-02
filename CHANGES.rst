@@ -4,7 +4,9 @@ Change History
 2.4.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added support for Python 3.7, 3.8 and 3.9.
+
+- Dropped support for Python 3.4.
 
 
 2.4.0 (2017-05-17)
