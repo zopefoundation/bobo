@@ -30,7 +30,7 @@ __all__ = (
     'resources',
     'scan_class',
     'subroute',
-    )
+)
 
 __metaclass__ = type
 
@@ -52,6 +52,7 @@ _json_content_type = re.compile('application/json;?').match
 
 getargspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
 
+
 class Application:
     """Create a WSGI application.
 
@@ -72,7 +73,8 @@ class Application:
        This option can be used to:
 
        - Specify modules to be scanned for resources.
-       - Include specific resources, rather than all resources in given modules.
+       - Include specific resources, rather than all resources in given
+         modules.
        - Override the order of resources given in modules.
        - Override routes used for resources given in modules.
 
@@ -179,7 +181,7 @@ class Application:
             bobo_configure = (
                 _get_global(name)
                 for name in filter(None, _uncomment(bobo_configure).split())
-                )
+            )
         for configure in bobo_configure:
             configure(config)
 
@@ -234,16 +236,14 @@ class Application:
             return self.not_found(request, method)
         except bbbbad_errors:
             raise
-        except Exception as exc:
+        except Exception:
             if (self.reraise_exceptions or
-                request.environ.get("x-wsgiorg.throw_errors")
-                ):
+                    request.environ.get("x-wsgiorg.throw_errors")):
                 raise
             return self.exception(request, method, sys.exc_info())
 
     def __call__(self, environ, start_response):
-        """Handle a WSGI application request.
-        """
+        """Handle a WSGI application request."""
         request = webob.Request(environ)
         if request.charset is None:
             # Maybe middleware can be more tricky?
@@ -275,7 +275,6 @@ class Application:
         headers
             A list of header name/value pairs.
         """
-
         content_type = data.content_type
         response = webob.Response(status=data.status,
                                   headerlist=data.headers)
@@ -328,11 +327,13 @@ def _err_response(status, method, title, message, headers=()):
         response.unicode_body = _html_template % (title, message)
     return response
 
+
 _html_template = u"""<html>
 <head><title>%s</title></head>
 <body>%s</body>
 </html>
 """
+
 
 def redirect(url, status=302, body=None,
              content_type="text/html; charset=UTF-8"):
@@ -354,6 +355,7 @@ def redirect(url, status=302, body=None,
     response.unicode_body = body
     return response
 
+
 class BoboException(Exception):
 
     def __init__(self, status, body,
@@ -362,6 +364,7 @@ class BoboException(Exception):
         self.body = body
         self.content_type = content_type
         self.headers = headers or []
+
 
 def _scan_module(module_name):
     # Scan a module for resources, and return a generator of resources
@@ -408,6 +411,7 @@ def _scan_module(module_name):
                 continue
         yield bobo_response
 
+
 def _make_br_function_by_methods(route, by_method):
     # Build a bobo_response function for one or more resources for a
     # given route that define both route and methodd (standard
@@ -429,18 +433,21 @@ def _make_br_function_by_methods(route, by_method):
 
     return bobo_response_function_by_method
 
+
 def _uncomment(text, split=False):
     result = list(filter(None, (
         line.split('#', 1)[0].strip()
         for line in text.strip().split('\n')
-        )))
+    )))
     if split:
         return result
     return '\n'.join(result)
 
+
 def _maybe_copy(ob1, name, ob2):
     if hasattr(ob1, name):
         setattr(ob2, name, getattr(ob1, name))
+
 
 class _MultiResource(list):
     def bobo_response(self, request, path, method):
@@ -448,6 +455,7 @@ class _MultiResource(list):
             r = resource(request, path, method)
             if r is not None:
                 return r
+
 
 def resources(resources):
     """Create a resource from multiple resources
@@ -469,6 +477,7 @@ def resources(resources):
 
     return handlers
 
+
 def reroute(route, resource):
     """Create a new resource from a re-routable resource.
 
@@ -485,6 +494,7 @@ def reroute(route, resource):
             return Subroute(route, resource)
         raise TypeError("Expected a reroutable")
     return bobo_reroute(route)
+
 
 def preroute(route, resource):
     """Create a new resource by adding a route prefix
@@ -508,7 +518,10 @@ def preroute(route, resource):
 
     return Subroute(route, lambda request: resource)
 
-_resource_re = re.compile('\s*([\S]+)\s*([-+]>)\s*(\S+)?\s*$').match
+
+_resource_re = re.compile(r'\s*([\S]+)\s*([-+]>)\s*(\S+)?\s*$').match
+
+
 def _route_config(lines):
     resources = []
     lines.reverse()
@@ -541,6 +554,7 @@ def _route_config(lines):
 
     return resources
 
+
 def _get_global(attr):
     if ':' in attr:
         mod, attr = attr.split(':', 1)
@@ -549,10 +563,14 @@ def _get_global(attr):
     mod = _import(mod)
     return eval(attr, mod.__dict__)
 
+
 def _import(module_name):
     return __import__(module_name, {}, {}, ['*'])
 
+
 _order = 0
+
+
 def order():
     """Return an integer that can be used to order a resource.
 
@@ -563,7 +581,10 @@ def order():
     _order += 1
     return _order
 
-_late_base = 1<<99
+
+_late_base = 1 << 99
+
+
 def late():
     """Return an order used for resources that should be searched late.
 
@@ -573,7 +594,10 @@ def late():
     """
     return order() + _late_base
 
+
 _early_base = -_late_base
+
+
 def early():
     """Return an order used for resources that should be searched early.
 
@@ -583,13 +607,18 @@ def early():
     """
     return order() + _early_base
 
+
 class _cached_property(object):
     def __init__(self, func):
         self.func = func
+
     def __get__(self, inst, class_):
         return self.func(inst)
 
-_ext_re = re.compile('/(\w+)').search
+
+_ext_re = re.compile(r'/(\w+)').search
+
+
 class _Handler:
     # Handlers wrap functions to provide the bobo resource interface.
     #
@@ -605,10 +634,10 @@ class _Handler:
                  method=None, params=None, check=None, content_type=None,
                  order_=None):
         if route is None:
-            route = '/'+handler.__name__
+            route = '/' + handler.__name__
             ext = _ext_re(content_type)
             if ext:
-                route += '.'+ext.group(1)
+                route += '.' + ext.group(1)
         self.bobo_route = route
         if isinstance(method, six.string_types):
             method = (method, )
@@ -689,6 +718,7 @@ class _Handler:
         return self.__class__(route, self.bobo_original, self.bobo_methods,
                               self.params, self.check, self.content_type)
 
+
 class _UnboundHandler:
 
     im_self = None
@@ -706,7 +736,7 @@ class _UnboundHandler:
         return "<unbound resource %s.%s>" % (
             self.im_class.__name__,
             self.im_func.__name__,
-            )
+        )
 
     def _check_args(self, args):
         if not args or not isinstance(args[0], self.im_class):
@@ -716,6 +746,7 @@ class _UnboundHandler:
     def __call__(self, *args, **kw):
         self._check_args(args)
         return self.im_func(*args, **kw)
+
 
 class _BoundHandler:
 
@@ -731,13 +762,14 @@ class _BoundHandler:
             self.im_class.__name__,
             self.im_func.__name__,
             self.im_self,
-            )
+        )
 
     def bobo_response(self, *args):
         return self.im_func.bobo_response(self.im_self, *args)
 
     def __call__(self, *args, **kw):
         return self.im_func(self.im_self, *args, **kw)
+
 
 def _handler(route, func=None, **kw):
     if func is None:
@@ -752,12 +784,13 @@ def _handler(route, func=None, **kw):
 
     return _Handler(route, func, **kw)
 
+
 def resource(route=None, method=('GET', 'POST', 'HEAD'),
              content_type=_default_content_type, check=None, order=None):
     """Create a resource
 
-    This function is used as a decorator to define a resource. It can be applied
-    to any kind of callable, not just a function.
+    This function is used as a decorator to define a resource. It can be
+    applied to any kind of callable, not just a function.
 
     Arguments:
 
@@ -818,6 +851,7 @@ def resource(route=None, method=('GET', 'POST', 'HEAD'),
     """
     return _handler(route, method=method, check=check,
                     content_type=content_type, order_=order)
+
 
 def post(route=None, content_type=_default_content_type, check=None,
          order=None):
@@ -891,6 +925,7 @@ def post(route=None, content_type=_default_content_type, check=None,
     """
     return _handler(route, method="POST", params='POST', check=check,
                     content_type=content_type, order_=order)
+
 
 def query(route=None, method=('GET', 'POST', 'HEAD'),
           content_type=_default_content_type, check=None, order=None):
@@ -1011,6 +1046,7 @@ def get(route, content_type=_default_content_type, check=None, order=None):
     return _handler(route, method="GET", check=check, params="params",
                     content_type=content_type, order_=order)
 
+
 def head(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles HEAD requests.
 
@@ -1047,6 +1083,7 @@ def head(route, content_type=_default_content_type, check=None, order=None):
     """
     return _handler(route, method="HEAD", params="params", check=check,
                     content_type=content_type, order_=order)
+
 
 def put(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles PUT requests.
@@ -1085,6 +1122,7 @@ def put(route, content_type=_default_content_type, check=None, order=None):
     return _handler(route, method="PUT", check=check, params="POST",
                     content_type=content_type, order_=order)
 
+
 def delete(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles DELETE requests.
 
@@ -1121,6 +1159,7 @@ def delete(route, content_type=_default_content_type, check=None, order=None):
     """
     return _handler(route, method="DELETE", check=check,
                     content_type=content_type, order_=order)
+
 
 def options(route, content_type=_default_content_type, check=None, order=None):
     """Create a resource that handles OPTIONS requests.
@@ -1161,6 +1200,8 @@ def options(route, content_type=_default_content_type, check=None, order=None):
 
 
 route_re = re.compile(r'(/:[a-zA-Z]\w*\??)(\.[^/]+)?')
+
+
 def _compile_route(route, partial=False):
     assert route.startswith('/') or not route
     pat = route_re.split(route)
@@ -1187,6 +1228,7 @@ def _compile_route(route, partial=False):
 
     if partial:
         match = re.compile(''.join(rpat)).match
+
         def partial_route_data(request, path, method=None):
             m = match(path)
             if m is None:
@@ -1200,6 +1242,7 @@ def _compile_route(route, partial=False):
         return partial_route_data
     else:
         match = re.compile(''.join(rpat)+'$').match
+
         def route_data(request, path, method=None):
             m = match(path)
             if m is None:
@@ -1208,6 +1251,7 @@ def _compile_route(route, partial=False):
                         if item[1] is not None)
 
         return route_data
+
 
 def _make_bobo_handle(func, original, check, content_type):
 
@@ -1227,7 +1271,10 @@ def _make_bobo_handle(func, original, check, content_type):
 
     return handle
 
+
 _no_jget = {}.get
+
+
 def _make_caller(obj, paramsattr):
     spec = getargspec(obj)
     nargs = nrequired = len(spec.args)
@@ -1239,7 +1286,7 @@ def _make_caller(obj, paramsattr):
 
     def bobo_apply(*pargs, **route):
         request = pargs[-1]
-        pargs = pargs[:-1] # () or (self, )
+        pargs = pargs[:-1]  # () or (self, )
         params = getattr(request, paramsattr)
         rget = route.get
         pget = params.getall
@@ -1275,6 +1322,7 @@ def _make_caller(obj, paramsattr):
 
     return bobo_apply
 
+
 class Subroute(_Handler):
 
     partial = True
@@ -1296,6 +1344,7 @@ class Subroute(_Handler):
     def bobo_reroute(self, route):
         return self.__class__(route, self.bobo_original)
 
+
 def _subroute(route, ob, scan):
     if scan:
         scan_class(ob)
@@ -1304,6 +1353,7 @@ def _subroute(route, ob, scan):
     if isinstance(ob, six.class_types):
         return _subroute_class(route, ob)
     return Subroute(route, ob)
+
 
 def subroute(route=None, scan=False, order=None):
     """Create a resource that matches a URL in multiple steps
@@ -1373,6 +1423,7 @@ def subroute(route=None, scan=False, order=None):
         return lambda ob: _subroute(route, ob, scan)
     return _subroute('/'+route.__name__, route, scan)
 
+
 class _subroute_class_method(object):
     def __init__(self, class_, class_func, inst_func):
         self.class_ = class_
@@ -1392,6 +1443,7 @@ class _subroute_class_method(object):
                     % inst.__class__.__name__)
         return inst_func.__get__(inst, class_)
 
+
 def _subroute_class(route, ob):
     matchers = ob.__dict__.get('bobo_subroute_matchers', None)
     if matchers is None:
@@ -1407,7 +1459,7 @@ def _subroute_class(route, ob):
                 # stacked matchers, so we're done
                 return ob
             if (('bobo_response' in ob.__dict__)
-                or not hasattr(ob, '__mro__')):
+                    or not hasattr(ob, '__mro__')):
                 del ob.bobo_subroute_matchers
                 raise TypeError("bobo_response class method already defined")
             # ok, it's inherited, we'll use super if necessary
@@ -1424,6 +1476,7 @@ def _subroute_class(route, ob):
 
     ob.bobo_response = _subroute_class_method(ob, bobo_response, br_orig)
     return ob
+
 
 def scan_class(class_):
     """Create an instance bobo_response method for a class
@@ -1444,9 +1497,8 @@ def scan_class(class_):
     by_route = {}
     handlers = []
     for (order, (name, resource)) in sorted(
-        (order, (name, resource))
-        for (name, (order, resource)) in six.iteritems(resources)
-        ):
+            (order, (name, resource))
+            for (name, (order, resource)) in six.iteritems(resources)):
         route = getattr(resource, 'bobo_route', None)
         if route is not None:
             methods = getattr(resource, 'bobo_methods', 0)
@@ -1486,11 +1538,13 @@ def scan_class(class_):
 
     return class_
 
+
 def _make_br_method_for_name(name):
     def custom_bobo_response_method(self, request, path, method):
         # Handle a resource that just has bobo_response, but no metadata
         return getattr(self, name).bobo_response(request, path, method)
     return custom_bobo_response_method
+
 
 def _make_br_method_by_methods(route, methods):
     # Make a combined bobo_response for one or more standard instance
@@ -1512,6 +1566,7 @@ def _make_br_method_by_methods(route, methods):
 
     return bobo_response_method_by_methods
 
+
 class MissingFormVariable(Exception):
     def __init__(self, name):
         self.name = name
@@ -1519,12 +1574,14 @@ class MissingFormVariable(Exception):
     def __str__(self):
         return self.name
 
+
 class MethodNotAllowed(Exception):
     def __init__(self, allowed):
         self.allowed = sorted(allowed)
 
     def __str__(self):
         return "Allowed: %s" % repr(self.allowed)[1:-1]
+
 
 class NotFound(Exception):
     """A resource cannot be found.
