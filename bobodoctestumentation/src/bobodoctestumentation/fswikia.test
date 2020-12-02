@@ -119,5 +119,6 @@ File-system wiki with authentication and (minimal) authorization
     >>> os.listdir('docs')
     ['front']
 
-    >>> open(os.path.join('docs', 'front')).read()
+    >>> with open(os.path.join('docs', 'front')) as f:
+    ...     f.read()
     'sometext'

@@ -22,23 +22,26 @@ def index():
 
 @bobo.post('/:name')
 def save(bobo_request, name, body):
-    open(os.path.join(top, name), 'w').write(body)
+    with open(os.path.join(top, name), 'w') as f:
+        f.write(body)
     return bobo.redirect(bobo_request.path_url, 303)
 
 @bobo.query('/:name')
 def get(name, edit=None):
     path = os.path.join(top, name)
     if os.path.exists(path):
-        body = open(path).read()
+        with open(path) as f:
+            body = f.read()
         if edit:
-            return open(edit_html).read() % dict(
-                name=name, body=body, action='Edit')
+            with open(edit_html) as f:
+                return f.read() % dict(
+                    name=name, body=body, action='Edit')
 
         return '''<html><head><title>%(name)s</title></head><body>
         %(name)s (<a href="%(name)s?edit=1">edit</a>)
         <hr />%(body)s</body></html>
         ''' % dict(name=name, body=body)
 
-    return open(edit_html).read() % dict(
-        name=name, body='', action='Create')
-
+    with open(edit_html) as f:
+        return f.read() % dict(
+            name=name, body='', action='Create')

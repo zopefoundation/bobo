@@ -57,5 +57,6 @@ File-system wiki
     >>> os.listdir('docs')
     ['front']
 
-    >>> open(os.path.join('docs', 'front')).read()
+    >>> with open(os.path.join('docs', 'front')) as f:
+    ...     f.read()
     'sometext'

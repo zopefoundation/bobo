@@ -6,7 +6,8 @@ of the components being tested pretty extensively.
 
 We'll start by creating a source file:
 
-    >>> _ = open('my.py', 'w').write('''
+    >>> with open('my.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo
     ... @bobo.query('/:me')
     ... def hi(me, who='world'):
@@ -92,7 +93,8 @@ If we change the source, it will be reloaded:
     >>> import time
     >>> time.sleep(1.1)
 
-    >>> _ = open('my.py', 'w').write('''
+    >>> with open('my.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo
     ... @bobo.query('/:me')
     ... def hi(me, who='world'):
@@ -108,7 +110,8 @@ If we change the source, it will be reloaded:
 
 Let's publish a module with an error:
 
-    >>> _ = open('foo.py', 'w').write('''
+    >>> with open('foo.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo
     ... @bobo.query('/x')
     ... def x():
@@ -141,14 +144,16 @@ Let's publish a module with an error:
 
     >>> time.sleep(1.1)
 
-    >>> _ = open('my.py', 'w').write('''
+    >>> with open('my.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo
     ... @bobo.query('/:me')
     ... def hi(me):
     ...     return "Hi you, I'm %s!" % (who, me)
     ... ''')
 
-    >>> _ = open('foo.py', 'w').write('''
+    >>> with open('foo.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo
     ... @bobo.query('/x')
     ... def x():
@@ -171,9 +176,10 @@ started.
     >>> import os, webtest
     >>> os.mkdir('docs')
     >>> os.mkdir(os.path.join('docs', 'subdir'))
-    >>> _ = open(os.path.join('docs', 'doc1.txt'), 'w').write('doc1 text')
-    >>> _ = open(os.path.join('docs', 'subdir', 'doc2.html'), 'w').write(
-    ...    'doc2 text')
+    >>> with open(os.path.join('docs', 'doc1.txt'), 'w') as f:
+    ...     _ = f.write('doc1 text')
+    >>> with open(os.path.join('docs', 'subdir', 'doc2.html'), 'w') as f:
+    ...    _= f.write('doc2 text')
 
     >>> boboserver.server(['-s/resources=docs'])
     Serving ["boboserver:static('/resources','docs')"] on port 8080...
@@ -249,7 +255,8 @@ Cleanup:
 Real server tests to make sure we can actually run the server. :)
 -----------------------------------------------------------------
 
-    >>> _ = open('my.py', 'w').write('''
+    >>> with open('my.py', 'w') as f:
+    ...     _ = f.write('''
     ... import bobo, os
     ...
     ... @bobo.query(method=None, content_type='text/plain')
@@ -267,7 +274,8 @@ Real server tests to make sure we can actually run the server. :)
 Whimper. I hate using processes in tests.
 
     >>> import subprocess
-    >>> _ = open('serve.py', 'w').write('''
+    >>> with open('serve.py', 'w') as f:
+    ...     _ = f.write('''
     ... import sys
     ... sys.path[:] = %r
     ... import boboserver
