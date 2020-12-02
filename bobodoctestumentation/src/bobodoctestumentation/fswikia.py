@@ -1,4 +1,4 @@
-import bobo, os, webob
+import bobo, os, webob, six
 
 def config(config):
     global top
@@ -11,12 +11,14 @@ edit_html = os.path.join(os.path.dirname(__file__), 'edit.html')
 @bobo.query('/login.html')
 def login(bobo_request, where=None):
     if bobo_request.remote_user:
-        return bobo.redirect(where or bobo_request.relative_url('.'))
+        return bobo.redirect(six.ensure_str(where)
+                             or bobo_request.relative_url('.'))
     return webob.Response(status=401)
 
 @bobo.query('/logout.html')
 def logout(bobo_request, where=None):
-    response = bobo.redirect(where or bobo_request.relative_url('.'))
+    response = bobo.redirect(six.ensure_str(where)
+                             or bobo_request.relative_url('.'))
     response.delete_cookie('wiki')
     return response
 
@@ -84,8 +86,9 @@ def get(bobo_request, name, edit=None):
         ''' % dict(name=name, body=body, edit=edit, who=who(bobo_request))
 
     if user:
-        return open(edit_html).read() % dict(
-            name=name, body='', action='Create')
+        with open(edit_html) as f:
+            return f.read() % dict(
+                name=name, body='', action='Create')
 
     return '''<html><head><title>Not found: %(name)s</title></head><body>
         <h1>%(name)s doesn not exist.</h1>

@@ -95,7 +95,8 @@ class File:
         if content_type is not None:
             response.content_type = content_type
         try:
-            response.body = open(self.path, 'rb').read()
+            with open(self.path, 'rb') as f:
+                response.body = f.read()
         except IOError:
             raise bobo.NotFound
 
@@ -142,8 +143,9 @@ class Reload:
         for name, (path, mtime) in sorted(six.iteritems(self.mtimes)):
             if os.stat(path).st_mtime != mtime:
                 print('Reloading %s' % name)
-                six.exec_(compile(open(path).read(), path, 'exec'),
-                          sys.modules[name].__dict__)
+                with open(path) as f:
+                    six.exec_(compile(f.read(), path, 'exec'),
+                              sys.modules[name].__dict__)
                 self.app.__init__(self.app.config)
                 self.mtimes[name] = path, os.stat(path).st_mtime
 
@@ -233,9 +235,9 @@ def server(args=None, Application=bobo.Application):
     for path in options.file or ():
         module = types.ModuleType(mname)
         module.__file__ = path
-        six.exec_(compile(open(module.__file__).read(),
-                          module.__file__, 'exec'),
-                  module.__dict__)
+        with open(module.__file__) as f:
+            six.exec_(compile(f.read(), module.__file__, 'exec'),
+                      module.__dict__)
         sys.modules[module.__name__] = module
         resources.append(module.__name__)
         mname += '_'
