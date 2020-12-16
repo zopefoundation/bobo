@@ -6,6 +6,7 @@
 *.pyo
 .coverage
 .coverage.*
+.eggs/
 .installed.cfg
 .mr.developer.cfg
 .tox/
