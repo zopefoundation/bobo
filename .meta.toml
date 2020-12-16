@@ -1,0 +1,30 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/pure-python
+[meta]
+template = "pure-python"
+commit-id = "8b8b3d3a8e4e2aec65a3d06a20358f21cff98aa7"
+
+[python]
+with-pypy = false
+with-legacy-python = true
+with-docs = false
+with-sphinx-doctests = false
+
+[coverage]
+fail-under = 0
+
+[manifest]
+additional-rules = [
+    "exclude docs",
+    "prune docs",
+    "recursive-include bobodoctestumentation *.bat",
+    "recursive-include bobodoctestumentation *.html",
+    "recursive-include bobodoctestumentation *.ini",
+    "recursive-include bobodoctestumentation *.png",
+    "recursive-include bobodoctestumentation *.py",
+    "recursive-include bobodoctestumentation *.svg",
+    "recursive-include bobodoctestumentation *.test",
+    "recursive-include bobodoctestumentation *.txt",
+    "recursive-include bobodoctestumentation Makefile",
+    "include bobodoctestumentation/src/bobodoctestumentation/htpasswd",
+    ]
