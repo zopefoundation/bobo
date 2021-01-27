@@ -2,8 +2,8 @@ import bobo, os
 
 @bobo.query('/')
 def html():
-    return open(os.path.join(os.path.dirname(__file__),
-                             'bobocalc.html')).read()
+    with open(os.path.join(os.path.dirname(__file__), 'bobocalc.html')) as f:
+        return f.read()
 
 @bobo.query(content_type='application/json')
 def add(value, input):

@@ -4,9 +4,10 @@ Static resource
     >>> import bobo, os, webtest
     >>> os.mkdir('docs')
     >>> os.mkdir(os.path.join('docs', 'subdir'))
-    >>> _ = open(os.path.join('docs', 'doc1.txt'), 'w').write('doc1 text')
-    >>> _ = open(os.path.join('docs', 'subdir', 'doc2.html'), 'w').write(
-    ...    'doc2 text')
+    >>> with open(os.path.join('docs', 'doc1.txt'), 'w') as f:
+    ...     _ = f.write('doc1 text')
+    >>> with open(os.path.join('docs', 'subdir', 'doc2.html'), 'w') as f:
+    ...    _ = f.write('doc2 text')
 
     >>> app = webtest.TestApp(bobo.Application(
     ...   bobo_resources=
