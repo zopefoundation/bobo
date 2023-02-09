@@ -15,7 +15,7 @@ from setuptools import setup
 
 
 name = 'bobo'
-version = '2.4.1.dev0'
+version = '3.0.dev0'
 
 entry_points = """
 [console_scripts]

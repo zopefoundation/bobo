@@ -1,8 +1,8 @@
 Change History
 ==============
 
-2.4.1 (unreleased)
-------------------
+3.0 (unreleased)
+----------------
 
 - Added support for Python 3.7, 3.8, 3.9, 3.10, 3.11.
 
