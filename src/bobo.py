@@ -32,15 +32,15 @@ __all__ = (
     'subroute',
 )
 
-__metaclass__ = type
 
 import inspect
 import logging
 import re
 import sys
+import urllib
+
 import webob
-import six
-from six.moves import filter, urllib
+
 
 log = logging.getLogger(__name__)
 
@@ -49,8 +49,6 @@ bbbbad_errors = KeyboardInterrupt, SystemExit, MemoryError
 _default_content_type = 'text/html; charset=UTF-8'
 
 _json_content_type = re.compile('application/json;?').match
-
-getargspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
 
 
 class Application:
@@ -177,7 +175,7 @@ class Application:
         self.config = config
 
         bobo_configure = config.get('bobo_configure', '')
-        if isinstance(bobo_configure, six.string_types):
+        if isinstance(bobo_configure, str):
             bobo_configure = (
                 _get_global(name)
                 for name in filter(None, _uncomment(bobo_configure).split())
@@ -187,7 +185,7 @@ class Application:
 
         bobo_errors = config.get('bobo_errors')
         if bobo_errors is not None:
-            if isinstance(bobo_errors, six.string_types):
+            if isinstance(bobo_errors, str):
                 bobo_errors = _uncomment(bobo_errors)
                 if ':' in bobo_errors:
                     bobo_errors = _get_global(bobo_errors)
@@ -200,7 +198,7 @@ class Application:
             _maybe_copy(bobo_errors, 'exception', self)
 
         bobo_resources = config.get('bobo_resources', '')
-        if isinstance(bobo_resources, six.string_types):
+        if isinstance(bobo_resources, str):
             bobo_resources = _uncomment(bobo_resources, True)
             if bobo_resources:
                 self.handlers = _route_config(bobo_resources)
@@ -210,7 +208,7 @@ class Application:
             self.handlers = [r.bobo_response for r in bobo_resources]
 
         handle_exceptions = config.get('bobo_handle_exceptions', True)
-        if isinstance(handle_exceptions, six.string_types):
+        if isinstance(handle_exceptions, str):
             handle_exceptions = handle_exceptions.lower() == 'true'
         self.reraise_exceptions = not handle_exceptions
 
@@ -284,9 +282,9 @@ class Application:
             return response
 
         body = data.body
-        if isinstance(body, six.text_type):
+        if isinstance(body, str):
             response.text = body
-        elif isinstance(body, six.binary_type):
+        elif isinstance(body, bytes):
             response.body = body
         elif _json_content_type(content_type):
             import json
@@ -328,7 +326,7 @@ def _err_response(status, method, title, message, headers=()):
     return response
 
 
-_html_template = u"""<html>
+_html_template = """<html>
 <head><title>%s</title></head>
 <body>%s</body>
 </html>
@@ -345,10 +343,7 @@ def redirect(url, status=302, body=None,
     in the ``url`` argument.
     """
     if body is None:
-        body = u'See %s' % url
-
-    # if isinstance(url, six.text_type):
-    #     url = url.encode('utf-8')
+        body = 'See %s' % url
 
     response = webob.Response(status=status, headerlist=[('Location', url)])
     response.content_type = content_type
@@ -381,7 +376,7 @@ def _scan_module(module_name):
         return
 
     resources = []
-    for resource in six.itervalues(module.__dict__):
+    for resource in module.__dict__.values():
         bobo_response = getattr(resource, 'bobo_response', None)
         if bobo_response is None:
             continue
@@ -465,7 +460,7 @@ def resources(resources):
     """
     handlers = _MultiResource()
     for resource in resources:
-        if isinstance(resource, six.string_types):
+        if isinstance(resource, str):
             if ':' in resource:
                 resource = _get_global(resource)
             else:
@@ -484,13 +479,13 @@ def reroute(route, resource):
     The resource can be a string, in which case it should be a global
     name, of the form ``module:expression``.
     """
-    if isinstance(resource, six.string_types):
+    if isinstance(resource, str):
         resource = _get_global(resource)
 
     try:
         bobo_reroute = resource.bobo_reroute
     except AttributeError:
-        if isinstance(resource, six.class_types):
+        if isinstance(resource, type):
             return Subroute(route, resource)
         raise TypeError("Expected a reroutable")
     return bobo_reroute(route)
@@ -508,7 +503,7 @@ def preroute(route, resource):
     bobo_response function, then a resource is computed that tries
     each of the resources found in the module in order.
     """
-    if isinstance(resource, six.string_types):
+    if isinstance(resource, str):
         if ':' in resource:
             resource = _get_global(resource)
         else:
@@ -608,7 +603,7 @@ def early():
     return order() + _early_base
 
 
-class _cached_property(object):
+class _cached_property:
     def __init__(self, func):
         self.func = func
 
@@ -639,7 +634,7 @@ class _Handler:
             if ext:
                 route += '.' + ext.group(1)
         self.bobo_route = route
-        if isinstance(method, six.string_types):
+        if isinstance(method, str):
             method = (method, )
         self.bobo_methods = method
 
@@ -704,11 +699,11 @@ class _Handler:
 
     @property
     def func_code(self):
-        return six.get_function_code(self.bobo_original)
+        return self.bobo_original.__code__
 
     @property
     def func_defaults(self):
-        return six.get_function_defaults(self.bobo_original)
+        return self.bobo_original.__defaults__
 
     @property
     def __name__(self):
@@ -733,7 +728,7 @@ class _UnboundHandler:
         return _BoundHandler(self.im_func, inst, self.im_class)
 
     def __repr__(self):
-        return "<unbound resource %s.%s>" % (
+        return "<unbound resource {}.{}>".format(
             self.im_class.__name__,
             self.im_func.__name__,
         )
@@ -758,7 +753,7 @@ class _BoundHandler:
         self.im_class = class_
 
     def __repr__(self):
-        return "<bound resource %s.%s of %r>" % (
+        return "<bound resource {}.{} of {!r}>".format(
             self.im_class.__name__,
             self.im_func.__name__,
             self.im_self,
@@ -773,12 +768,12 @@ class _BoundHandler:
 
 def _handler(route, func=None, **kw):
     if func is None:
-        if route is None or isinstance(route, six.string_types):
+        if route is None or isinstance(route, str):
             return lambda f: _handler(route, f, **kw)
         func = route
         route = None
     elif route is not None:
-        assert isinstance(route, six.string_types)
+        assert isinstance(route, str)
         if route and not route.startswith('/'):
             raise ValueError("Non-empty routes must start with '/'.", route)
 
@@ -1234,7 +1229,7 @@ def _compile_route(route, partial=False):
             if m is None:
                 return m
             path = path[len(m.group(0)):]
-            return (dict(item for item in six.iteritems(m.groupdict())
+            return (dict(item for item in m.groupdict().items()
                          if item[1] is not None),
                     path,
                     )
@@ -1247,7 +1242,7 @@ def _compile_route(route, partial=False):
             m = match(path)
             if m is None:
                 return m
-            return dict(item for item in six.iteritems(m.groupdict())
+            return dict(item for item in m.groupdict().items()
                         if item[1] is not None)
 
         return route_data
@@ -1276,7 +1271,7 @@ _no_jget = {}.get
 
 
 def _make_caller(obj, paramsattr):
-    spec = getargspec(obj)
+    spec = inspect.getfullargspec(obj)
     nargs = nrequired = len(spec.args)
     if spec.defaults:
         nrequired -= len(spec.defaults)
@@ -1350,7 +1345,7 @@ def _subroute(route, ob, scan):
         scan_class(ob)
         return _subroute_class(route, ob)
 
-    if isinstance(ob, six.class_types):
+    if isinstance(ob, type):
         return _subroute_class(route, ob)
     return Subroute(route, ob)
 
@@ -1419,12 +1414,12 @@ def subroute(route=None, scan=False, order=None):
 
     if route is None:
         return lambda ob: _subroute('/'+ob.__name__, ob, scan)
-    if isinstance(route, six.string_types):
+    if isinstance(route, str):
         return lambda ob: _subroute(route, ob, scan)
     return _subroute('/'+route.__name__, route, scan)
 
 
-class _subroute_class_method(object):
+class _subroute_class_method:
     def __init__(self, class_, class_func, inst_func):
         self.class_ = class_
         self.class_func = class_func
@@ -1487,7 +1482,7 @@ def scan_class(class_):
 
     resources = {}
     for c in reversed(inspect.getmro(class_)):
-        for name, resource in six.iteritems(c.__dict__):
+        for name, resource in c.__dict__.items():
             br = getattr(resource, 'bobo_response', None)
             if br is None:
                 continue
@@ -1498,7 +1493,7 @@ def scan_class(class_):
     handlers = []
     for (order, (name, resource)) in sorted(
             (order, (name, resource))
-            for (name, (order, resource)) in six.iteritems(resources)):
+            for (name, (order, resource)) in resources.items()):
         route = getattr(resource, 'bobo_route', None)
         if route is not None:
             methods = getattr(resource, 'bobo_methods', 0)

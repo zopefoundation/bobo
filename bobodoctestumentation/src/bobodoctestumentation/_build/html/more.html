@@ -1,0 +1,851 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Additional topics &#8212; bobo 2.2.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference" href="reference.html" />
+    <link rel="prev" title="Introduction" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="Reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="contents.html">bobo 2.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Additional topics</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="additional-topics">
+<h1>Additional topics<a class="headerlink" href="#additional-topics" title="Permalink to this heading">¶</a></h1>
+<section id="check-functions">
+<h2>Check functions<a class="headerlink" href="#check-functions" title="Permalink to this heading">¶</a></h2>
+<p>When using the <code class="docutils literal notranslate"><span class="pre">query</span></code>, <code class="docutils literal notranslate"><span class="pre">post</span></code>, and <code class="docutils literal notranslate"><span class="pre">resource</span></code> decorators, you
+can define a check function.  Before calling the decorated function,
+the check function is called.  If the check function returns a
+response, the check function’s response is used rather than calling
+the decorated function.  A common use of check functions is for
+authorization:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">webob</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="s1">&#39;some text&#39;</span><span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">authenticated</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">remote_user</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">401</span><span class="p">)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/:name&#39;</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">authenticated</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">body</span>
+    <span class="k">return</span> <span class="s1">&#39;Updated&#39;</span>
+</pre></div>
+</div>
+<p>In this example, we use a very simple authorization model.  We can
+update data if the user is authenticated.  Check functions take 3
+positional arguments:</p>
+<ul class="simple">
+<li><p>an instance</p></li>
+<li><p>a request</p></li>
+<li><p>the decorated function (or callable)</p></li>
+</ul>
+<p>If a resource is a method, the first argument passed to the check
+function will be the instance the method is applied to. Otherwise, it
+will be None.</p>
+</section>
+<section id="decorated-objects-can-be-used-directly">
+<h2>Decorated objects can be used directly<a class="headerlink" href="#decorated-objects-can-be-used-directly" title="Permalink to this heading">¶</a></h2>
+<p>Functions or callables decorated by the <code class="docutils literal notranslate"><span class="pre">query</span></code>, <code class="docutils literal notranslate"><span class="pre">post</span></code>,
+<code class="docutils literal notranslate"><span class="pre">resource</span></code> and <code class="docutils literal notranslate"><span class="pre">subroute</span></code> decorators can be called as if they were
+undecorated. For example, with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/:name&#39;</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">authenticated</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We can call the get function directly:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&#39;some text&#39;</span>
+</pre></div>
+</div>
+<p>Similarly, classes decorated with the subroute decorator can be used
+normally. The subroute decorator simply adds a <code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> class
+method that allows the class to be used as a <a class="reference internal" href="reference.html#term-resource"><span class="xref std std-term">resource</span></a>.</p>
+</section>
+<section id="configured-routes">
+<span id="configuredroutes"></span><h2>Configured routes<a class="headerlink" href="#configured-routes" title="Permalink to this heading">¶</a></h2>
+<p>For simplicity, you normally specify routes in your application code.
+For example, in:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/greeters/:myname&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;world&quot;</span><span class="p">,</span> <span class="n">myname</span><span class="o">=</span><span class="s1">&#39;Bobo&#39;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;Hello </span><span class="si">%s</span><span class="s2">! My name is </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">myname</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You specify 2 things:</p>
+<ol class="arabic simple">
+<li><p>Which URLs should be handled by the hello function.</p></li>
+<li><p>How to call the function.</p></li>
+</ol>
+<p>In most cases, being able to specify this information one place is
+convenient.</p>
+<p>Sometimes, however, you may want to separate routes from your
+implementation to:</p>
+<ul class="simple">
+<li><p>Manage the routes in one place,</p></li>
+<li><p>Omit some routes defined in the implementation,</p></li>
+<li><p>Change the routes or search order from what’s given in the
+implementation.</p></li>
+</ul>
+<p>Bobo provides a way to explicitly configure the routes as part of
+configuration. When you specify resources, you can control the order
+resources are searched and override the routes used.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">bobo_resources</span></code> option takes a number of resources separated by
+newlines. Resources take one of 4 forms:</p>
+<dl>
+<dt>modulename</dt><dd><p>Use all of the resources found in the module.</p>
+</dd>
+<dt>modulename:expression</dt><dd><p>Use the given :term:resource.  The resource is specified using a
+module name and an expression (typically just a global name)
+that’s executed in the module’s global scope.</p>
+</dd>
+<dt>route -&gt; modulename:expression</dt><dd><p>Use the given object with the given route. The object is specified
+using a module name and an expression (typically just a global
+name) that’s executed in the module’s global scope.</p>
+<p>The object must have a <code class="docutils literal notranslate"><span class="pre">bobo_route</span></code> method, as objects created
+using one of the <code class="docutils literal notranslate"><span class="pre">query</span></code>, <code class="docutils literal notranslate"><span class="pre">post</span></code>, <code class="docutils literal notranslate"><span class="pre">resource</span></code> or <code class="docutils literal notranslate"><span class="pre">subroute</span></code>
+decorators do, or the object must be a class with a constructor
+that takes a request and route data and returns a resource.</p>
+</dd>
+<dt>route +&gt; modulename:expression</dt><dd><p>Use a <a class="reference internal" href="reference.html#term-resource"><span class="xref std std-term">resource</span></a>, but add the given route as a prefix of the
+resources route. The resource is given by a module name and
+expression.</p>
+<p>The given route may not have placeholders.</p>
+</dd>
+</dl>
+<p>Resources are separated by newlines.  The string <code class="docutils literal notranslate"><span class="pre">-&gt;</span></code>, or <code class="docutils literal notranslate"><span class="pre">+&gt;</span></code> at
+the end of a line acts as a line continuation character.</p>
+<p>To show how this works, we’ll look at an example.  We’ll create a
+2 modules with some resources in them. First, people:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">subroute</span><span class="p">(</span><span class="s1">&#39;/employee/:id&#39;</span><span class="p">,</span> <span class="n">scan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Employee</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">hi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Hi, I&#39;m employee </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/:name&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hi</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;Hi, I&#39;m </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
+<p>Then docs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span>
+
+<span class="n">documents</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;bobs&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s1">&#39;hi.html&#39;</span><span class="p">:</span> <span class="s2">&quot;Hi. I&#39;m Bob.&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;hobbies&#39;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">&#39;cooking.html&#39;</span><span class="p">:</span> <span class="s2">&quot;I like to cook.&quot;</span><span class="p">,</span>
+      <span class="s1">&#39;sports.html&#39;</span><span class="p">:</span> <span class="s2">&quot;I like to ski.&quot;</span><span class="p">,</span>
+      <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">subroute</span><span class="p">(</span><span class="s1">&#39;/docs&#39;</span><span class="p">,</span> <span class="n">scan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Folder</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">documents</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">base</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bobo_request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">bobo</span><span class="o">.</span><span class="n">redirect</span><span class="p">(</span><span class="n">bobo_request</span><span class="o">.</span><span class="n">url</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;&lt;a href=&quot;</span><span class="si">%s</span><span class="s1">&quot;&gt;</span><span class="si">%s</span><span class="s1">&lt;a&gt;&lt;br&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">subroute</span><span class="p">(</span><span class="s1">&#39;/:item_id&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">subitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">item_id</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+           <span class="k">return</span> <span class="n">Folder</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+           <span class="k">return</span> <span class="n">Document</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">scan_class</span>
+<span class="k">class</span> <span class="nc">Document</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
+</pre></div>
+</div>
+<p>We use the <code class="docutils literal notranslate"><span class="pre">bobo_resources</span></code> option to control the URLs we access these
+with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">app</span><span class="p">:</span><span class="n">main</span><span class="p">]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">egg</span><span class="p">:</span><span class="n">bobo</span>
+<span class="n">bobo_resources</span> <span class="o">=</span>
+    <span class="c1"># Same routes</span>
+    <span class="n">people</span><span class="p">:</span><span class="n">Employee</span> <span class="c1"># 1</span>
+    <span class="n">docs</span>            <span class="c1"># 2</span>
+
+    <span class="c1"># new routes</span>
+    <span class="o">/</span><span class="n">long</span><span class="o">/</span><span class="n">winded</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="p">:</span><span class="n">name</span><span class="o">/</span><span class="n">lets</span><span class="o">/</span><span class="n">get</span><span class="o">/</span><span class="n">on</span><span class="o">/</span><span class="k">with</span><span class="o">/</span><span class="n">it</span> <span class="o">-&gt;</span> <span class="c1"># 3</span>
+       <span class="n">people</span><span class="p">:</span><span class="n">hi</span>                                   <span class="c1"># 3 also</span>
+    <span class="o">/</span><span class="n">us</span><span class="o">/</span><span class="p">:</span><span class="nb">id</span> <span class="o">-&gt;</span> <span class="n">people</span><span class="p">:</span><span class="n">Employee</span>  <span class="c1"># 4</span>
+
+    <span class="c1"># prefixes</span>
+    <span class="o">/</span><span class="n">folks</span> <span class="o">+&gt;</span> <span class="n">people</span> <span class="c1"># 5</span>
+    <span class="o">/</span><span class="n">ho</span> <span class="o">+&gt;</span> <span class="n">people</span><span class="p">:</span><span class="n">hi</span> <span class="c1"># 6</span>
+</pre></div>
+</div>
+<p>This example shows a number of things:</p>
+<ul>
+<li><p>We can use blank lines and comments.  Route configurations can get
+involved, so comments are useful. In the example, comments are used
+to assign numbers to the individual routes so we can refer to them.</p></li>
+<li><p>We have several form of resource:</p>
+<ol class="arabic">
+<li><p>Use an existing resource with its original route.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">employee</span><span class="o">/</span><span class="mi">1</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="p">,</span> <span class="n">I</span><span class="s1">&#39;m employee 1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Use the resources from a module with their original routes.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">docs</span><span class="o">/</span><span class="n">bobs</span><span class="o">/</span><span class="n">hi</span><span class="o">.</span><span class="n">html</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="o">.</span> <span class="n">I</span><span class="s1">&#39;m Bob.</span>
+</pre></div>
+</div>
+</li>
+<li><p>Define a new route for an existing resource.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">long</span><span class="o">/</span><span class="n">winded</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">bobo</span><span class="o">/</span><span class="n">lets</span><span class="o">/</span><span class="n">get</span><span class="o">/</span><span class="n">on</span><span class="o">/</span><span class="k">with</span><span class="o">/</span><span class="n">it</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="p">,</span> <span class="n">I</span><span class="s1">&#39;m bobo</span>
+</pre></div>
+</div>
+</li>
+<li><p>Define a new route for an existing subroute.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">us</span><span class="o">/</span><span class="mi">1</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="p">,</span> <span class="n">I</span><span class="s1">&#39;m employee 1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Use all of the routes from a module with a prefix added.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">folks</span><span class="o">/</span><span class="n">employee</span><span class="o">/</span><span class="mi">1</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="p">,</span> <span class="n">I</span><span class="s1">&#39;m employee 1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Use an existing route adding a prefix.</p>
+<p>If we use a URL like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">ho</span><span class="o">/</span><span class="n">silly</span>
+</pre></div>
+</div>
+<p>We’ll get output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Hi</span><span class="p">,</span> <span class="n">I</span><span class="s1">&#39;m silly</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+</ul>
+<section id="configuring-routes-in-python">
+<h3>Configuring routes in python<a class="headerlink" href="#configuring-routes-in-python" title="Permalink to this heading">¶</a></h3>
+<p>To configure routes in Python, you can use the <code class="docutils literal notranslate"><span class="pre">bobo.resources</span></code>
+function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span>
+
+<span class="n">myroutes</span> <span class="o">=</span> <span class="n">bobo</span><span class="o">.</span><span class="n">resources</span><span class="p">((</span>
+    <span class="c1"># Same routes</span>
+    <span class="s1">&#39;people:Employee&#39;</span><span class="p">,</span> <span class="c1"># 1</span>
+    <span class="s1">&#39;docs&#39;</span><span class="p">,</span>            <span class="c1"># 2</span>
+
+    <span class="c1"># new routes</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">reroute</span><span class="p">(</span>
+      <span class="s1">&#39;/long/winded/path/:name/lets/get/on/with/it&#39;</span><span class="p">,</span> <span class="c1"># 3</span>
+      <span class="s1">&#39;people:hi&#39;</span><span class="p">),</span>                                  <span class="c1"># 3 also</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">reroute</span><span class="p">(</span><span class="s1">&#39;/us/:id&#39;</span><span class="p">,</span> <span class="s1">&#39;people:Employee&#39;</span><span class="p">),</span>  <span class="c1"># 4</span>
+
+    <span class="c1"># prefixes</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">preroute</span><span class="p">(</span><span class="s1">&#39;/folks&#39;</span><span class="p">,</span> <span class="s1">&#39;people&#39;</span><span class="p">),</span> <span class="c1"># 5</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">preroute</span><span class="p">(</span><span class="s1">&#39;/ho&#39;</span><span class="p">,</span> <span class="s1">&#39;people:hi&#39;</span><span class="p">),</span> <span class="c1"># 6</span>
+<span class="p">))</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">resources</span></code> function takes an iterable of resources, where the
+resources can be resource objects, or strings naming resource objects
+or modules.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">reroute</span></code> function takes a route and an existing resource and
+returns a new resource with the given route.  The resource must have a
+<code class="docutils literal notranslate"><span class="pre">bobo_route</span></code> method, as resources created using one of the
+<code class="docutils literal notranslate"><span class="pre">query</span></code>, <code class="docutils literal notranslate"><span class="pre">post</span></code>, <code class="docutils literal notranslate"><span class="pre">resource</span></code> or <code class="docutils literal notranslate"><span class="pre">subroute</span></code> decorators do, or
+the resource must be a class with a constructor that takes a request
+and route data and returns a resource.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">preroute</span></code> function takes a route and a resource and returns a
+new resource that uses the given route as a subroute to get to the
+resource.</p>
+<p>The example above is almost equivalent to the earlier
+example.  If the module containing the code above is given to the
+bobo_resources option, then the resources defined by the call will be
+used.  It is slightly different from the earlier example, because if
+the module defines any other resources, they’ll be used as well.</p>
+</section>
+<section id="resource-modules">
+<h3>Resource modules<a class="headerlink" href="#resource-modules" title="Permalink to this heading">¶</a></h3>
+<p>Rather than defining a resource in a module, we can make a module a
+resource by defining a <code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> module attribute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">docs</span><span class="o">,</span> <span class="nn">people</span>
+
+<span class="n">bobo_response</span> <span class="o">=</span> <span class="n">bobo</span><span class="o">.</span><span class="n">resources</span><span class="p">((</span>
+    <span class="c1"># Same routes</span>
+    <span class="n">people</span><span class="o">.</span><span class="n">Employee</span><span class="p">,</span> <span class="c1"># 1</span>
+    <span class="n">docs</span><span class="p">,</span>            <span class="c1"># 2</span>
+
+    <span class="c1"># new routes</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">reroute</span><span class="p">(</span>
+      <span class="s1">&#39;/long/winded/path/:name/lets/get/on/with/it&#39;</span><span class="p">,</span> <span class="c1"># 3</span>
+      <span class="n">people</span><span class="o">.</span><span class="n">hi</span><span class="p">),</span>                                    <span class="c1"># 3 also</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">reroute</span><span class="p">(</span><span class="s1">&#39;/us/:id&#39;</span><span class="p">,</span> <span class="n">people</span><span class="o">.</span><span class="n">Employee</span><span class="p">),</span>  <span class="c1"># 4</span>
+
+    <span class="c1"># prefixes</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">preroute</span><span class="p">(</span><span class="s1">&#39;/folks&#39;</span><span class="p">,</span> <span class="n">people</span><span class="p">),</span> <span class="c1"># 5</span>
+    <span class="n">bobo</span><span class="o">.</span><span class="n">preroute</span><span class="p">(</span><span class="s1">&#39;/ho&#39;</span><span class="p">,</span> <span class="n">people</span><span class="o">.</span><span class="n">hi</span><span class="p">),</span> <span class="c1"># 6</span>
+
+<span class="p">))</span><span class="o">.</span><span class="n">bobo_response</span>
+</pre></div>
+</div>
+<p>Here, rather than adding a new resource to the module, we’ve copied the
+<code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> method from a new resource to the module, making
+the module a resource.  When bobo scans a module, it first checks
+whether the module has a <code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> attribute. If it does,
+then bobo uses the module as a resource and doesn’t scan the module for
+resources.  This way, we control precisely which resources will be used,
+given the module.</p>
+<p>This example also illustrates that, rather than passing strings to the
+<code class="docutils literal notranslate"><span class="pre">resources</span></code>, <code class="docutils literal notranslate"><span class="pre">reroute</span></code> and <code class="docutils literal notranslate"><span class="pre">preroute</span></code> functions, we can pass
+objects directly.</p>
+</section>
+<section id="creating-bobo-based-wsgi-applications-from-python">
+<h3>Creating bobo-based WSGI applications from Python<a class="headerlink" href="#creating-bobo-based-wsgi-applications-from-python" title="Permalink to this heading">¶</a></h3>
+<p>Usually, bobo applications are created using the bobo development
+server or through a PasteDeployment configuration.  You can also
+create applications in Python using the <code class="docutils literal notranslate"><span class="pre">bobo.Application</span></code>
+constructor. You call the constructor with keyword arguments:</p>
+<dl>
+<dt>bobo_resources</dt><dd><p>The bobo resources to be used in the application</p>
+<p>This is either a string defining resources, or an iterable of
+modules or resource objects.</p>
+</dd>
+<dt>bobo_configuration</dt><dd><p>A list of configuration functions.</p>
+<p>This is either a string consistning whitespace-delimited list of
+configuration callable names, or an iterable of callables. The
+callables will be called with the keyword arguments passed to
+<code class="docutils literal notranslate"><span class="pre">bobo.Application</span></code>. This allows you to pass configuration options
+when defining an application.</p>
+</dd>
+<dt>bobo_errors</dt><dd><p>A custom error-handler object.  This is either a string name, of the
+form <code class="docutils literal notranslate"><span class="pre">'modulename:expression'</span></code>, or a Python object defining one or
+more of the error handling functions.</p>
+</dd>
+<dt>bobo_handle_exceptions</dt><dd><p>A boolean flag indicating whether bobo should handle uncaught
+application exceptions. If set to <code class="docutils literal notranslate"><span class="pre">False</span></code> or <code class="docutils literal notranslate"><span class="pre">'false'</span></code>, then
+bobo won’t catch exceptions. This is useful if you want middleware
+to handle exceptions.</p>
+</dd>
+</dl>
+<p>Here’s a somewhat contrived example that illustrates creating an
+application object from Python, passing objects rather than strings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">webob</span>
+
+<span class="k">def</span> <span class="nf">config</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">configured_name</span>
+    <span class="n">configured_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/hi&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hi</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">configured_name</span>
+
+<span class="k">class</span> <span class="nc">Errors</span><span class="p">:</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;missing&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">bobo</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span>
+    <span class="n">bobo_resources</span><span class="o">=</span><span class="p">[</span><span class="n">hi</span><span class="p">],</span>
+    <span class="n">bobo_configure</span><span class="o">=</span><span class="p">[</span><span class="n">config</span><span class="p">],</span>
+    <span class="n">bobo_errors</span><span class="o">=</span><span class="n">Errors</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;welcome&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-response-generation">
+<h2>Error response generation<a class="headerlink" href="#error-response-generation" title="Permalink to this heading">¶</a></h2>
+<p>There are four cases for which bobo has to generate error responses:</p>
+<ol class="arabic simple">
+<li><p>When a resource can’t be found, bobo generates a “404 Not Found”
+response.</p></li>
+<li><p>When a resource can be found but it doesn’t allow the request
+method, bobo generates a “405 Method Not Allowed” response.</p></li>
+<li><p>When a <code class="docutils literal notranslate"><span class="pre">query</span></code> or <code class="docutils literal notranslate"><span class="pre">post</span></code> decorated function requires a
+parameter and the parameter is isn’t in the given form data, bobo
+generates a “403 Forbidden” response with a body that indicates the
+missing parameter.</p></li>
+<li><p>When a route handler raises an exception, bobo generates a
+“500 Internal Server Error” response.</p></li>
+</ol>
+<p>For each of these responses, bobo generates a small HTML body.</p>
+<p>Applications can take over generating error responses by specifying a
+<code class="docutils literal notranslate"><span class="pre">bobo_errors</span></code> option that specified an object or a module defining 3
+callable attributes:</p>
+<dl>
+<dt>not_found(request, method)</dt><dd><p>Generate a response when a resource can’t be found.</p>
+<p>This should return a 404 response.</p>
+</dd>
+<dt>method_not_allowed(request, method, methods)</dt><dd><p>Generate a response when the resource found doesn’t allow the
+request method.</p>
+<p>This should return a 405 response and set the <code class="docutils literal notranslate"><span class="pre">Allowed</span></code> response
+header to the list of allowed headers.</p>
+</dd>
+<dt>missing_form_variable(request, method, name)</dt><dd><p>Generate a response when a form variable is missing.</p>
+<p>The proper response in this situation isn’t obvious.</p>
+</dd>
+</dl>
+<p>The value given for the <code class="docutils literal notranslate"><span class="pre">bobo_errors</span></code> option is either a module
+name, or an object name of the form: “module_name:expression”.</p>
+<p>Let’s look at an example. First, an <code class="docutils literal notranslate"><span class="pre">errorsample</span></code> module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">webob</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;GET&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hi</span><span class="p">(</span><span class="n">who</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;Hi </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">who</span>
+
+<span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;not found&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">method_not_allowed</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">methods</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span>
+        <span class="s2">&quot;bad method &quot;</span><span class="o">+</span><span class="n">method</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">,</span>
+        <span class="n">headerlist</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;Allow&#39;</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">methods</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain; charset=UTF-8&#39;</span><span class="p">),</span>
+            <span class="p">])</span>
+
+<span class="k">def</span> <span class="nf">missing_form_variable</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;Missing &quot;</span><span class="o">+</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then a configuration file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">app</span><span class="p">:</span><span class="n">main</span><span class="p">]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">egg</span><span class="p">:</span><span class="n">bobo</span>
+<span class="n">bobo_resources</span> <span class="o">=</span> <span class="n">errorsample</span>
+<span class="n">bobo_errors</span> <span class="o">=</span> <span class="n">errorsample</span>
+</pre></div>
+</div>
+<p>If we use the URL:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>http://localhost:8080/hi.html?who=you
+</pre></div>
+</div>
+<p>We’ll get the response:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Response</span><span class="p">:</span> <span class="mi">200</span> <span class="n">OK</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">html</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
+<span class="n">Hi</span> <span class="n">you</span>
+</pre></div>
+</div>
+<p>But if we use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">ho</span>
+</pre></div>
+</div>
+<p>We’ll get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Response</span><span class="p">:</span> <span class="mi">404</span> <span class="n">Not</span> <span class="n">Found</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">html</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
+<span class="ow">not</span> <span class="n">found</span>
+</pre></div>
+</div>
+<p>If we use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">hi</span><span class="o">.</span><span class="n">html</span>
+</pre></div>
+</div>
+<p>We’ll get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Response</span><span class="p">:</span> <span class="mi">200</span> <span class="n">OK</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">html</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
+<span class="n">Missing</span> <span class="n">who</span>
+</pre></div>
+</div>
+<p>If we make a POST to the same URL, we’ll get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Response</span><span class="p">:</span> <span class="mi">405</span> <span class="n">Method</span> <span class="n">Not</span> <span class="n">Allowed</span>
+<span class="n">Allow</span><span class="p">:</span> <span class="n">GET</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">plain</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
+<span class="n">bad</span> <span class="n">method</span> <span class="n">POST</span>
+</pre></div>
+</div>
+<p>We can use an object with methods rather than module-level functions
+to generate error responses. Here we define an <code class="docutils literal notranslate"><span class="pre">errorsample2</span></code> module
+that defines an class with methods for generating error responses:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">webob</span>
+
+<span class="k">class</span> <span class="nc">Errors</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;not found&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">method_not_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">methods</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span>
+            <span class="s2">&quot;bad method &quot;</span><span class="o">+</span><span class="n">method</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">,</span>
+            <span class="n">headerlist</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="s1">&#39;Allow&#39;</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">methods</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain; charset=UTF-8&#39;</span><span class="p">),</span>
+                <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">missing_form_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;Missing &quot;</span><span class="o">+</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the configuration file, we specify an object, rather than a module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">app</span><span class="p">:</span><span class="n">main</span><span class="p">]</span>
+<span class="n">use</span> <span class="o">=</span> <span class="n">egg</span><span class="p">:</span><span class="n">bobo</span>
+<span class="n">bobo_resources</span> <span class="o">=</span> <span class="n">errorsample</span>
+<span class="n">bobo_errors</span> <span class="o">=</span> <span class="n">errorsample2</span><span class="p">:</span><span class="n">Errors</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note that in this example, rather than just using a global name, we
+use an expression to specify the errors object.</p>
+<section id="uncaught-exceptions">
+<h3>Uncaught exceptions<a class="headerlink" href="#uncaught-exceptions" title="Permalink to this heading">¶</a></h3>
+<p>Normally, bobo does not let uncaught exceptions propagate; however, if
+the <code class="docutils literal notranslate"><span class="pre">bobo_handle_exceptions</span></code> option is set to <code class="docutils literal notranslate"><span class="pre">False</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">'false'</span></code>) or if a request environment has the key
+<cite>x-wsgiorg.throw_errors</cite>, any uncaught exceptions will be raised.
+This is useful if you want WSGI middleware to handle exceptions.</p>
+<p>If you want to provide custom handling of uncaught exceptions,
+you can include an <code class="docutils literal notranslate"><span class="pre">exception</span></code> method in the object you
+give to <code class="docutils literal notranslate"><span class="pre">bobo_errors</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span><span class="o">,</span> <span class="nn">webob</span>
+
+<span class="k">class</span> <span class="nc">Errors</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;not found&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">method_not_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">methods</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span>
+            <span class="s2">&quot;bad method &quot;</span><span class="o">+</span><span class="n">method</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">,</span>
+            <span class="n">headerlist</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="s1">&#39;Allow&#39;</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">methods</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">),</span>
+                <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">missing_form_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;Missing &quot;</span><span class="o">+</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s2">&quot;Dang! </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ordering-resources">
+<span id="orderl"></span><h2>Ordering Resources<a class="headerlink" href="#ordering-resources" title="Permalink to this heading">¶</a></h2>
+<p>When looking for resources (or sub-resources) that match a request,
+resources are tried in order, where the default order is the order of
+definition. The order can be overridden by passing an order using the
+<code class="docutils literal notranslate"><span class="pre">order</span></code> keyword argument to the bobo decorators <a class="footnote-reference brackets" href="#customorder" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
+The results of calling the functions <code class="docutils literal notranslate"><span class="pre">bobo.early()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">bobo.late()</span></code> are typically the only values that are useful to pass.
+It is usually a good idea to use <code class="docutils literal notranslate"><span class="pre">bobo.late()</span></code> for subroutes that
+match any path, so that more specific routes are tried earlier.  If
+multiple resources that use <code class="docutils literal notranslate"><span class="pre">bobo.late()</span></code> (or <code class="docutils literal notranslate"><span class="pre">bobo.early()</span></code>)
+match a path, the first one defined will be used.</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="customorder" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Advanced applications may provide their own
+<a class="reference internal" href="reference.html#term-resource"><span class="xref std std-term">resource</span></a> implementations.  Custom resource implementations
+must implement the resource interface and will provide an order
+using the <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> attribute.  See <a class="reference internal" href="reference.html#resourceinterface"><span class="std std-ref">IResource</span></a>.</p>
+</aside>
+</aside>
+</section>
+<section id="additional-helpers">
+<h2>Additional Helpers<a class="headerlink" href="#additional-helpers" title="Permalink to this heading">¶</a></h2>
+<p>In addition to <cite>query</cite> and <cite>post</cite>, bobo provides route decorators for
+handling specific HTTP methods.  We’ll construct a simple RESTful app
+to demonstrate.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span>
+<span class="kn">import</span> <span class="nn">webob</span>
+
+<span class="n">items</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/item/:id&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+   <span class="k">if</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+      <span class="n">data</span><span class="p">,</span> <span class="n">ct</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+      <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">ct</span><span class="p">)</span>
+   <span class="k">raise</span> <span class="n">bobo</span><span class="o">.</span><span class="n">NotFound</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="s2">&quot;/item/:id&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_head</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+   <span class="n">res</span> <span class="o">=</span> <span class="n">_get</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">res</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/item/:id&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+   <span class="n">items</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">bobo_request</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">bobo_request</span><span class="o">.</span><span class="n">content_type</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">201</span><span class="p">)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="s2">&quot;/item/:id&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_options</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+   <span class="n">_get</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+   <span class="k">return</span> <span class="s2">&quot;options&quot;</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/item/:id&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_delete</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+   <span class="n">items</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+   <span class="k">return</span> <span class="s2">&quot;delete&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="backtracking">
+<h2>Backtracking<a class="headerlink" href="#backtracking" title="Permalink to this heading">¶</a></h2>
+<p>When handling a request, if bobo finds a resource that matches
+the route but does not accept the request method, it will continue
+looking for matching resources; if it eventually finds none, it will
+then generate a “405 Method Not Allowed” response.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">bobo</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/event/create&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;created event&quot;</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;/event/:action?&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,))</span>
+<span class="k">def</span> <span class="nf">catch_all</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;get request for </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">action</span><span class="p">,)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">scan_class</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;/:userid&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,))</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bobo_request</span><span class="p">,</span> <span class="n">userid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;created user with id </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">userid</span><span class="p">,)</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;/:identifier&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;HEAD&quot;</span><span class="p">,))</span>
+    <span class="k">def</span> <span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bobo_request</span><span class="p">,</span> <span class="n">identifier</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;/:id&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,))</span>
+    <span class="k">def</span> <span class="nf">catch_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;get user with id </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">id</span><span class="p">,)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">scan_class</span>
+<span class="k">class</span> <span class="nc">Thing</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;/:id&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,))</span>
+    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bobo_request</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;put thing with id </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">id</span><span class="p">,)</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">subroute</span><span class="p">(</span><span class="s2">&quot;/users&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">users</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">User</span><span class="p">()</span>
+
+<span class="nd">@bobo</span><span class="o">.</span><span class="n">subroute</span><span class="p">(</span><span class="s2">&quot;/:thing&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">thing</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="n">thing</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Thing</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>We have a resource that matches the route “/event/create”, but it is
+for POST requests.  If we make a GET request, the second resource
+with the matching route that can handle GET requests gets called.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/event/create&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">get request for &#39;create&#39;</span>
+</pre></div>
+</div>
+<p>Of course POST requests go to the appropriate resource.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/event/create&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">created event</span>
+</pre></div>
+</div>
+<p>If we perform a HEAD request for “/event/create”, we get a 405 response,
+as no resource is able to handle the method.  The “Allow” header indicates
+all of the request methods that are valid for the particular path.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">app</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="s1">&#39;/event/create&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">)</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Allow&quot;</span><span class="p">]</span>
+<span class="go">&#39;GET, POST, PUT&#39;</span>
+</pre></div>
+</div>
+<p>The backtracking behavior works with subroutes.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/users/1234&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">get user with id &#39;1234&#39;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="s1">&#39;/users/1234&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<span class="go">200 OK</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/users/1234&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">created user with id &#39;1234&#39;</span>
+</pre></div>
+</div>
+<p>If the first matching subroute returns a resource with no handlers for
+the request method, the next matching subroute is tried.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/users/54321&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">put thing with id &#39;54321&#39;</span>
+</pre></div>
+</div>
+<p>If no resource is able to handle the request method, we get a 405 response
+with an Allow header.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">app</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;/users/54321&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;OPTIONS&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">405</span><span class="p">)</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Allow&quot;</span><span class="p">]</span>
+<span class="go">&#39;GET, HEAD, POST, PUT&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="automatic-encoding-of-redirect-destinations">
+<h2>Automatic encoding of redirect destinations<a class="headerlink" href="#automatic-encoding-of-redirect-destinations" title="Permalink to this heading">¶</a></h2>
+<p>Since URLs are often computed based on request data, it’s easy for
+applications to generate Unicode URLs.  For this reason, unicode URL’s
+passed to <code class="docutils literal notranslate"><span class="pre">bobo.redirect</span></code> are UTF-8 encoded.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="contents.html">
+              <img class="logo" src="_static/bobo.png" alt="Logo"/>
+            </a></p>
+  <div>
+    <h3><a href="contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Additional topics</a><ul>
+<li><a class="reference internal" href="#check-functions">Check functions</a></li>
+<li><a class="reference internal" href="#decorated-objects-can-be-used-directly">Decorated objects can be used directly</a></li>
+<li><a class="reference internal" href="#configured-routes">Configured routes</a><ul>
+<li><a class="reference internal" href="#configuring-routes-in-python">Configuring routes in python</a></li>
+<li><a class="reference internal" href="#resource-modules">Resource modules</a></li>
+<li><a class="reference internal" href="#creating-bobo-based-wsgi-applications-from-python">Creating bobo-based WSGI applications from Python</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-response-generation">Error response generation</a><ul>
+<li><a class="reference internal" href="#uncaught-exceptions">Uncaught exceptions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ordering-resources">Ordering Resources</a></li>
+<li><a class="reference internal" href="#additional-helpers">Additional Helpers</a></li>
+<li><a class="reference internal" href="#backtracking">Backtracking</a></li>
+<li><a class="reference internal" href="#automatic-encoding-of-redirect-destinations">Automatic encoding of redirect destinations</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Introduction</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="reference.html"
+                          title="next chapter">Reference</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="Reference"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="contents.html">bobo 2.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Additional topics</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009-2014, Jim Fulton.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>

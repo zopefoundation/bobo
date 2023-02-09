@@ -13,9 +13,6 @@
 ##############################################################################
 """Create WSGI-based web applications.
 """
-from __future__ import print_function
-import six
-from six.moves import map
 
 __all__ = (
     'Debug',
@@ -24,19 +21,21 @@ __all__ = (
     'static',
 )
 
-__metaclass__ = type
 
-import bobo
+import mimetypes
 import optparse
 import os
-import mimetypes
-import pdb
+import pdb  # noqa: T100 import for pdb found
 import re
 import sys
 import traceback
 import types
-import webob
 import wsgiref.simple_server
+
+import webob
+
+import bobo
+
 
 mimetypes.init()
 
@@ -61,14 +60,14 @@ class Directory:
         for name in sorted(os.listdir(self.path)):
             if os.path.isdir(os.path.join(self.path, name)):
                 name += '/'
-            links.append('<a href="%s">%s</a>' % (name, name))
+            links.append('<a href="{}">{}</a>'.format(name, name))
         return """<html>
-        <head><title>%s</title></head>
+        <head><title>{}</title></head>
         <body>
-          %s
+          {}
         </body>
         </html>
-        """ % (self.path[len(self.root):], '<br>\n          '.join(links))
+        """.format(self.path[len(self.root):], '<br>\n          '.join(links))
 
     @bobo.subroute('/:name')
     def traverse(self, request, name):
@@ -97,7 +96,7 @@ class File:
         try:
             with open(self.path, 'rb') as f:
                 response.body = f.read()
-        except IOError:
+        except OSError:
             raise bobo.NotFound
 
         return response
@@ -140,12 +139,12 @@ class Reload:
             mtimes[name] = (filename, os.stat(filename).st_mtime)
 
     def __call__(self, environ, start_response):
-        for name, (path, mtime) in sorted(six.iteritems(self.mtimes)):
+        for name, (path, mtime) in sorted(self.mtimes.items()):
             if os.stat(path).st_mtime != mtime:
                 print('Reloading %s' % name)
                 with open(path) as f:
-                    six.exec_(compile(f.read(), path, 'exec'),
-                              sys.modules[name].__dict__)
+                    exec(compile(f.read(), path, 'exec'),
+                         sys.modules[name].__dict__)
                 self.app.__init__(self.app.config)
                 self.mtimes[name] = path, os.stat(path).st_mtime
 
@@ -199,9 +198,7 @@ def server(args=None, Application=bobo.Application):
         logging.basicConfig()
         args = sys.argv[1:]
 
-    usage = "%prog [options] name=value ..."
-    if sys.version_info >= (2, 5):
-        usage = 'Usage: ' + usage
+    usage = "Usage: %prog [options] name=value ..."
     parser = optparse.OptionParser(usage)
     parser.add_option(
         '--port', '-p', type='int', dest='port', default=8080,
@@ -236,15 +233,14 @@ def server(args=None, Application=bobo.Application):
         module = types.ModuleType(mname)
         module.__file__ = path
         with open(module.__file__) as f:
-            six.exec_(compile(f.read(), module.__file__, 'exec'),
-                      module.__dict__)
+            exec(compile(f.read(), module.__file__, 'exec'), module.__dict__)
         sys.modules[module.__name__] = module
         resources.append(module.__name__)
         mname += '_'
 
     for s in options.static or ():
         route, path = s.split('=', 1)
-        resources.append("boboserver:static(%r,%r)" % (route, path))
+        resources.append("boboserver:static({!r},{!r})".format(route, path))
 
     if not resources:
         error("No resources were specified.")
@@ -267,5 +263,5 @@ def server(args=None, Application=bobo.Application):
     if options.debug:
         app = Debug(app)
 
-    print("Serving %s on port %s..." % (resources, options.port))
+    print("Serving {} on port {}...".format(resources, options.port))
     run_server(app, options.port)

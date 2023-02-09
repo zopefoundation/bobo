@@ -1,0 +1,874 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Reference &#8212; bobo 2.2.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Additional topics" href="more.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="more.html" title="Additional topics"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="contents.html">bobo 2.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reference</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Permalink to this heading">¶</a></h1>
+<section id="module-bobo">
+<span id="bobo-module-documentation"></span><h2><a class="reference internal" href="#module-bobo" title="bobo"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bobo</span></code></a> module documentation<a class="headerlink" href="#module-bobo" title="Permalink to this heading">¶</a></h2>
+<p>Create WSGI-based web applications.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bobo.Application">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">DEFAULT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.Application" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a WSGI application.</p>
+<p>The DEFAULT argument, if given, is a dictionary of options.
+Keyword options override options given in the DEFAULT options.</p>
+<p>Option values are strings, typically read from ConfigParser files.</p>
+<p>The values used by bobo, <code class="docutils literal notranslate"><span class="pre">bobo_resources</span></code>, <code class="docutils literal notranslate"><span class="pre">bobo_configure</span></code>
+and <code class="docutils literal notranslate"><span class="pre">bobo_errors</span></code>, can have comments.  Lines within these
+values are truncated at the first ‘#’ characters.</p>
+<p>The one required option is bobo_resources:</p>
+<dl>
+<dt>bobo_resources</dt><dd><p>Specifies resources to be used.</p>
+<p>This option can be used to:</p>
+<ul class="simple">
+<li><p>Specify modules to be scanned for resources.</p></li>
+<li><p>Include specific resources, rather than all resources in given
+modules.</p></li>
+<li><p>Override the order of resources given in modules.</p></li>
+<li><p>Override routes used for resources given in modules.</p></li>
+</ul>
+<p>Resources are specified on separate lines.  Resources take one
+of 4 forms:</p>
+<dl>
+<dt>module_name</dt><dd><p>Use the resources from the given module.</p>
+</dd>
+<dt>resource</dt><dd><p>Use the named resource.</p>
+<p>The resource is of the form: modulename:expression.  The
+object is obtained by evaluating the expression in the named
+module.</p>
+</dd>
+<dt>route -&gt; resource</dt><dd><p>The given route, possibly with placeholders, is
+handled by the given resource.</p>
+<p>The resource is of the form: modulename:expression.</p>
+<p>The object named by the resource must meet one of the following
+conditions:</p>
+<ul class="simple">
+<li><p>It was created using one of the bobo decorators:
+<code class="docutils literal notranslate"><span class="pre">resource</span></code>, <code class="docutils literal notranslate"><span class="pre">post</span></code>, <code class="docutils literal notranslate"><span class="pre">query</span></code>, or <code class="docutils literal notranslate"><span class="pre">subroute</span></code>.</p></li>
+<li><p>It has <code class="docutils literal notranslate"><span class="pre">bobo_reroute</span></code> method that takes the given route
+and returns a new resource. (The bobo decorators provide this.)</p></li>
+<li><p>It is a class, in which case it is treated as a subroute.</p></li>
+</ul>
+<p>Newlines may be included between the”-&gt;” and the resource, allowing
+the specification to be split over multiple lines.</p>
+</dd>
+<dt>route +&gt; resource</dt><dd><p>The given route, which may not have placeholder, is added as
+a prefix of the given resource’s route.</p>
+<p>The resource is of the form: modulename:expression, or just
+modulename.</p>
+<p>Newlines may be included between the”+&gt;” and the resource, allowing
+the specification to be split over multiple lines.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Bobo also used the following options:</p>
+<dl>
+<dt>bobo_configure</dt><dd><p>Specify one or more (whitespace-delimited) callables to be
+called with the configuration data passed to the application.</p>
+<p>Each callable is of the form: module_name:global_name</p>
+</dd>
+<dt>bobo_errors</dt><dd><p>Specify an object to be used for generating error responses.
+The value must be a module name or an object name of the form:
+<code class="docutils literal notranslate"><span class="pre">modulename:expression</span></code>.  The object must have the
+callable attributes:</p>
+<dl>
+<dt>not_found(request, method)</dt><dd><p>Generate a response when a resource can’t be found.</p>
+<p>This should return a 404 response.</p>
+</dd>
+<dt>method_not_allowed(request, method, methods)</dt><dd><p>Generate a response when the resource found doesn’t allow the
+request method.</p>
+<p>This should return a 405 response and set the <code class="docutils literal notranslate"><span class="pre">Allowed</span></code> response
+header to the list of allowed headers.</p>
+</dd>
+<dt>missing_form_variable(request, method, name)</dt><dd><p>Generate a response when a form variable is missing.</p>
+<p>The proper response in this situation isn’t obvious.</p>
+</dd>
+<dt>exception(request, method, ex_info)</dt><dd><p>Generate a response for the exception information given by
+exc_info.  This method is optional.  Bobo’s default behavior
+is to simply re-raise the exception.</p>
+</dd>
+</dl>
+</dd>
+<dt>bobo_handle_exceptions</dt><dd><p>Boolean indicating whether bobo should catch application exceptions.</p>
+<p>This defaults to True. It should be set to false if WSGI
+middleware should handle exceptions.</p>
+<p>If provides as a string (through configuration), it should be
+either ‘true’ or ‘false’.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bobo.Application.build_response">
+<span class="sig-name descname"><span class="pre">build_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.Application.build_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a response object from raw data.</p>
+<p>This method is used by bobo when an application returns data rather
+than a response object.  It can be overridden by subclasses to support
+alternative request implementations. (For example, some implementations
+may have response objects on a request that influence how a response is
+generated.)</p>
+<p>The data object has several attributes:</p>
+<dl class="simple">
+<dt>status</dt><dd><p>Integer HTTP status code</p>
+</dd>
+<dt>body</dt><dd><p>Raw body data as returned from an application</p>
+</dd>
+<dt>content_type</dt><dd><p>The desired content type</p>
+</dd>
+<dt>headers</dt><dd><p>A list of header name/value pairs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="bobo.NotFound">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">NotFound</span></span><a class="headerlink" href="#bobo.NotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>A resource cannot be found.</p>
+<p>This exception can be conveniently raised by application
+code. Bobo will catch it and generate a not-found response object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.early">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">early</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#bobo.early" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an order used for resources that should be searched early.</p>
+<p>The function returns a larger integer each time it is called.  The
+value is smaller than values returned by the order or late
+functions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.late">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">late</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#bobo.late" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an order used for resources that should be searched late.</p>
+<p>The function returns a larger integer each time it is called.  The
+value is larger than values returned by the order or early
+functions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.order">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">order</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#bobo.order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an integer that can be used to order a resource.</p>
+<p>The function returns a larger integer each time it is called.  A
+resource can use this to set it’s <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.post">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'text/html;</span> <span class="pre">charset=UTF-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource that passes POST data as arguments</p>
+<p>This function is used as a function decorator to define a resource.</p>
+<p>Arguments:</p>
+<dl>
+<dt>route</dt><dd><p>The route to match against a request URL to determine
+if the decorated callable should be used to satisfy a
+request.</p>
+<p>if omitted, a route will be computed using the decorated
+callable’s name with the content_type subtype used as an extension.</p>
+</dd>
+<dt>content_type</dt><dd><p>The content_type for the response.</p>
+<p>The content type is ignored if the callable returns a response object.</p>
+</dd>
+<dt>check</dt><dd><p>A check function.</p>
+<p>If provided, the check function (or callable) will be called
+before the decorated function.  The check function is passed
+an instance, a request, and the decorated function.  If the
+resource is a method, then first argument is the instance the
+method was called on, otherwise it is None.  If the check
+function returns a response, the response will be used instead
+of calling the decorated function.</p>
+</dd>
+<dt>order</dt><dd><p>The order controls how resources are searched when matching
+URLs.  Normally, resources are searched in order of
+evaluation.  Passing the result of calling <code class="docutils literal notranslate"><span class="pre">bobo.early</span></code> or
+<code class="docutils literal notranslate"><span class="pre">bobo.late</span></code> can cause resources to be searched early or late.</p>
+</dd>
+</dl>
+<p>The function may be used as a decorator directly without calling
+it. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">post</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>is equivalent to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>The callable the decorator is applied to is analyzed to determine it’s
+signature.  When the callable is called, the request, route data and
+request form data are used to satisfy any named arguments in the callable’s
+signature.  For example, in the case of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/:a&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>when handling a request for: <code class="docutils literal notranslate"><span class="pre">http://localhost/x</span></code>, with a post
+body of <code class="docutils literal notranslate"><span class="pre">b=1</span></code>, the request is passed to the <code class="docutils literal notranslate"><span class="pre">bobo_request</span></code>
+argument. the route data value <code class="docutils literal notranslate"><span class="pre">'x'</span></code> is passed to the argument
+<code class="docutils literal notranslate"><span class="pre">a</span></code>, and the form data <code class="docutils literal notranslate"><span class="pre">1</span></code> is passed for <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p>
+<p>Standard function metadata attributes <code class="docutils literal notranslate"><span class="pre">func_code</span></code> and <code class="docutils literal notranslate"><span class="pre">func_defaults</span></code>
+are used to determine the signature and required arguments. The method
+attribute, <code class="docutils literal notranslate"><span class="pre">im_func</span></code> is used to determine if the callable is a method, in
+which case the first argument found in the signature is ignored.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.preroute">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">preroute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.preroute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new resource by adding a route prefix</p>
+<p>The given route is used as a subroute that is matched before
+matching the given resource’s route.</p>
+<p>The resource can be a string, in which case it should be a global
+name, of the form <code class="docutils literal notranslate"><span class="pre">module:expression</span></code>, or a module name.  If a
+module name is given, and the module doesn’t have a
+bobo_response function, then a resource is computed that tries
+each of the resources found in the module in order.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.query">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('GET',</span> <span class="pre">'POST',</span> <span class="pre">'HEAD')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'text/html;</span> <span class="pre">charset=UTF-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource that passes form data as arguments</p>
+<p>Create a decorator that, when applied to a callable, creates a
+resource.</p>
+<p>Arguments:</p>
+<dl>
+<dt>route</dt><dd><p>The route to match against a request URL to determine if the decorated
+callable should be used to satisfy a request.</p>
+<p>if omitted, a route will be computed using the decorated
+callable’s name with the content_type subtype used as an extension.</p>
+</dd>
+<dt>method</dt><dd><p>The HTTP request method or methods that can be used. This can
+be either a string giving a single method name, or a sequence
+of strings.</p>
+<p>The method argument defaults to the tuple <code class="docutils literal notranslate"><span class="pre">('GET',</span> <span class="pre">'HEAD',</span> <span class="pre">'POST')</span></code>.</p>
+</dd>
+<dt>content_type</dt><dd><p>The content_type for the response.</p>
+<p>The content type is ignored if the callable returns a response object.</p>
+</dd>
+<dt>check</dt><dd><p>A check function.</p>
+<p>If provided, the check function (or callable) will be called
+before the decorated function.  The check function is passed
+an instance, a request, and the decorated function.  If the
+resource is a method, then first argument is the instance the
+method was called on, otherwise it is None.  If the check
+function returns a response, the response will be used instead
+of calling the decorated function.</p>
+</dd>
+<dt>order</dt><dd><p>The order controls how resources are searched when matching
+URLs.  Normally, resources are searched in order of
+evaluation.  Passing the result of calling <code class="docutils literal notranslate"><span class="pre">bobo.early</span></code> or
+<code class="docutils literal notranslate"><span class="pre">bobo.late</span></code> can cause resources to be searched early or late.</p>
+</dd>
+</dl>
+<p>The function may be used as a decorator directly without calling
+it. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>is equivalent to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>The callable the decorator is applied to is analyzed to determine it’s
+signature.  When the callable is called, the request, route data and
+request form data are used to satisfy any named arguments in the callable’s
+signature.  For example, in the case of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;/:a&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">bobo_request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>when handling a request for: <code class="docutils literal notranslate"><span class="pre">http://localhost/x?b=1</span></code>,
+the request is passed to the <code class="docutils literal notranslate"><span class="pre">bobo_request</span></code> argument. the route
+data value <code class="docutils literal notranslate"><span class="pre">'x'</span></code> is passed to the argument <code class="docutils literal notranslate"><span class="pre">a</span></code>, and the form
+data <code class="docutils literal notranslate"><span class="pre">1</span></code> is passed for <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p>
+<p>Standard function metadata attributes <code class="docutils literal notranslate"><span class="pre">func_code</span></code> and
+<code class="docutils literal notranslate"><span class="pre">func_defaults</span></code> are used to determine the signature and required
+arguments. The method attribute, <code class="docutils literal notranslate"><span class="pre">im_func</span></code> is used to determine
+if the callable is a method, in which case the first argument found
+in the signature is ignored.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.redirect">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">redirect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">302</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'text/html;</span> <span class="pre">charset=UTF-8'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.redirect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a response to redirect to a URL.</p>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">status</span></code> argument can be used to supply a status other than
+302.  The optional <code class="docutils literal notranslate"><span class="pre">body</span></code> argument can be used to specify a response
+body. If not specified, a default body is generated based on the URL given
+in the <code class="docutils literal notranslate"><span class="pre">url</span></code> argument.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.reroute">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">reroute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.reroute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new resource from a re-routable resource.</p>
+<p>The resource can be a string, in which case it should be a global
+name, of the form <code class="docutils literal notranslate"><span class="pre">module:expression</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.resource">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('GET',</span> <span class="pre">'POST',</span> <span class="pre">'HEAD')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'text/html;</span> <span class="pre">charset=UTF-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource</p>
+<p>This function is used as a decorator to define a resource. It can be
+applied to any kind of callable, not just a function.</p>
+<p>Arguments:</p>
+<dl>
+<dt>route</dt><dd><p>The route to match against a request URL to determine
+if the decorated callable should be used to satisfy a
+request.</p>
+<p>if omitted, a route will be computed using the decorated
+callable’s name with the content_type subtype used as an extension.</p>
+</dd>
+<dt>method</dt><dd><p>The HTTP request method or methods that can be used. This can be either
+a string giving a single method name, or a sequence of strings.</p>
+</dd>
+<dt>content_type</dt><dd><p>The content_type for the response.</p>
+<p>The content type is ignored if the callable returns a response object.</p>
+</dd>
+<dt>check</dt><dd><p>A check function.</p>
+<p>If provided, the check function (or callable) will be called
+before the decorated callable.  The check function is passed
+an instance, a request, and the decorated callable.  If the
+resource is a method, then first argument is the instance the
+method was called on, otherwise it is None.  If the check
+function returns a response, the response will be used instead
+of calling the decorated callable.</p>
+</dd>
+<dt>order</dt><dd><p>The order controls how resources are searched when matching
+URLs.  Normally, resources are searched in order of
+evaluation.  Passing the result of calling <code class="docutils literal notranslate"><span class="pre">bobo.early</span></code> or
+<code class="docutils literal notranslate"><span class="pre">bobo.late</span></code> can cause resources to be searched early or late.</p>
+</dd>
+</dl>
+<p>The function may be used as a decorator directly without calling
+it. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>is equivalent to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@bobo</span><span class="o">.</span><span class="n">resource</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>The callable must take a request object as the first argument.  If the
+route has placeholders, then the callable must accept named parameters
+corresponding to the placeholders.  The named parameters must have defaults
+for any optional placeholders.</p>
+<p>Unlike the post and query decorators, this decorator doesn’t introspect the
+callable it’s applied to.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.resources">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">resources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resources</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource from multiple resources</p>
+<p>A new resource is returned that works by searching the given resources in
+the order they’re given.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.scan_class">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">scan_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.scan_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an instance bobo_response method for a class</p>
+<p>Scan a class (including its base classes) for resources and generate
+a bobo_response method of the class that calls them.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bobo.subroute">
+<span class="sig-prename descclassname"><span class="pre">bobo.</span></span><span class="sig-name descname"><span class="pre">subroute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#bobo.subroute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource that matches a URL in multiple steps</p>
+<p>If called with a route or without any arguments, subroute returns
+an object that should then be called with a resource factory.  The
+resource factory will be called with a request and route data and
+should return a resource object.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@subroute</span><span class="p">(</span><span class="s1">&#39;/:employee_id&#39;</span><span class="p">,</span> <span class="n">scan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">EmployeeView</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">employee_id</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>If no route is supplied, the <code class="docutils literal notranslate"><span class="pre">__name__</span></code> attribute of the callable
+is used.</p>
+<p>The resource factory may return None to indicate that a resource can’t be
+found on the subroute.</p>
+<p>The scan argument, if given, should be given as a keyword
+parameter. It defaults to False.  If True, then the callable
+should be a class and a <code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> instance method will be
+added to the class that calls resources found by scanning the
+class and its base classes.  Passing a True <code class="docutils literal notranslate"><span class="pre">scan</span></code>
+argument is equivalent to calling <code class="docutils literal notranslate"><span class="pre">scan_class</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@subroute</span><span class="p">(</span><span class="s1">&#39;/:employee_id&#39;</span><span class="p">)</span>
+<span class="nd">@scan_class</span>
+<span class="k">class</span> <span class="nc">EmployeeView</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">employee_id</span><span class="p">):</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">subroute</span></code> can be passed a callable directly, as in:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@subroute</span>
+<span class="k">class</span> <span class="nc">Employees</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">bobo_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Which is equivalent to calling <code class="docutils literal notranslate"><span class="pre">subroute</span></code> without the callable
+and then passing the callable to the route:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@subroute</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">Employees</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">bobo_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Note that in the example above, the scan argument isn’t passed and
+defaults to False, so the class has to provide it’s own
+<code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> method (or otherwise arrange that instances have one).</p>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">order</span></code> parameter controls how resources are
+searched when matching URLs.  Normally, resources are searched in
+order of evaluation.  Passing the result of calling <code class="docutils literal notranslate"><span class="pre">bobo.early</span></code>
+or <code class="docutils literal notranslate"><span class="pre">bobo.late</span></code> can cause resources to be searched early or late.
+It is usually a good idea to use <code class="docutils literal notranslate"><span class="pre">bobo.late</span></code> for subroutes that
+match any URL.</p>
+</dd></dl>
+
+</section>
+<section id="module-boboserver">
+<span id="boboserver-module-documentation"></span><h2><a class="reference internal" href="#module-boboserver" title="boboserver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">boboserver</span></code></a> module documentation<a class="headerlink" href="#module-boboserver" title="Permalink to this heading">¶</a></h2>
+<p>Create WSGI-based web applications.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="boboserver.Debug">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">boboserver.</span></span><span class="sig-name descname"><span class="pre">Debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.Debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post-mortem debugging middleware</p>
+<p>This middleware catches uncaught exceptions and runs the
+<code class="docutils literal notranslate"><span class="pre">pdb.post_mortem</span></code> debugging function, helping you to debug
+exceptions raised by your application.</p>
+<p>The Debug class implements the <a class="reference external" href="http://pythonpaste.org/deploy/#paste-filter-app-factory">Paste Deployment
+filter_app_factory protocol</a> and is
+exported as a <code class="docutils literal notranslate"><span class="pre">paste.filter_app_factory</span></code> entry point named <code class="docutils literal notranslate"><span class="pre">debug</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="boboserver.Reload">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">boboserver.</span></span><span class="sig-name descname"><span class="pre">Reload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.Reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Module-reload middleware</p>
+<p>This middleware can <em>only</em> be used with bobo applications.  It
+monitors a list of modules given by a <code class="docutils literal notranslate"><span class="pre">modules</span></code> keyword
+parameter and configuration option.  When a module changes, it
+reloads the module and reinitializes the bobo application.</p>
+<p>The Reload class implements the <a class="reference external" href="http://pythonpaste.org/deploy/#paste-filter-app-factory">Paste Deployment
+filter_app_factory protocol</a> and is
+exported as a <code class="docutils literal notranslate"><span class="pre">paste.filter_app_factory</span></code> entry point named <code class="docutils literal notranslate"><span class="pre">reload</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="boboserver.server">
+<span class="sig-prename descclassname"><span class="pre">boboserver.</span></span><span class="sig-name descname"><span class="pre">server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Application=&lt;class</span> <span class="pre">'bobo.Application'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bobo development server</p>
+<p>The server function implements the bobo development server.</p>
+<p>It is exported as a <code class="docutils literal notranslate"><span class="pre">console_script</span></code> entry point named <code class="docutils literal notranslate"><span class="pre">bobo</span></code>.</p>
+<p>An alternate application can be passed in to run the server with a
+different application implementation as long as application passed
+in subclasses bobo.Application.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="boboserver.static">
+<span class="sig-prename descclassname"><span class="pre">boboserver.</span></span><span class="sig-name descname"><span class="pre">static</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.static" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a resource that serves static files from a directory</p>
+</dd></dl>
+
+</section>
+<section id="the-bobo-server">
+<span id="boboserver"></span><h2>The bobo server<a class="headerlink" href="#the-bobo-server" title="Permalink to this heading">¶</a></h2>
+<p>The bobo server is a script that runs a development web server with a
+given source file or modules, and configuration options. The usage is:</p>
+<blockquote>
+<div><p>bobo [options] [name=value …]</p>
+</div></blockquote>
+<p>Command-line arguments are either options, or
+configuration options of the form optionname=value.</p>
+<p>Options:</p>
+<dl class="option-list">
+<dt><kbd><span class="option">-f <var>SOURCE</var></span>, <span class="option">--file <var>SOURCE</var></span></kbd></dt>
+<dd><p>Specify a source file name to be published. It’ll be converted to a module
+named <code class="docutils literal notranslate"><span class="pre">bobo__main__</span></code> and will have its __file__ set to the original
+file name.</p>
+</dd>
+<dt><kbd><span class="option">-r <var>RESOURCE</var></span>, <span class="option">--resource <var>RESOURCE</var></span></kbd></dt>
+<dd><p>Specify a resource, such as a module or global, to publish.</p>
+</dd>
+<dt><kbd><span class="option">-D</span>, <span class="option">--debug</span></kbd></dt>
+<dd><p>Provide post-mortem debugging.  If an uncaught exception is raised,
+use <code class="docutils literal notranslate"><span class="pre">pdb.post_mortem</span></code> to debug it.</p>
+</dd>
+<dt><kbd><span class="option">-p <var>PORT</var></span>, <span class="option">--port <var>PORT</var></span></kbd></dt>
+<dd><p>Specify the port to listen on.</p>
+</dd>
+<dt><kbd><span class="option">-c <var>GLOBALNAME</var></span>, <span class="option">--configure=<var>GLOBALNAME</var></span></kbd></dt>
+<dd><p>Specify the name of a global to call with configuration data.  This is
+shorthand for <code class="docutils literal notranslate"><span class="pre">bobo_configure=globalname</span></code>.  This is normally a
+name of the form <code class="docutils literal notranslate"><span class="pre">modulename:expression</span></code>, however, if you supply
+just an expression, the module of the first resource will be used.
+For example, with a command like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bobo</span> <span class="o">-</span><span class="n">f</span> <span class="n">my</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">c</span> <span class="n">config</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">config</span></code> function in <code class="docutils literal notranslate"><span class="pre">my.py</span></code> will be used.</p>
+</dd>
+</dl>
+<dl>
+<dt>-s ROUTE=PATH, –static ROUTE=PATH</dt><dd><p>Publish static files in the directory given by PATH at the route
+given by ROUTE.</p>
+<p>While there are middleware components that are better at publishing
+static resources for production use, this option makes it easier to
+get started during development.</p>
+</dd>
+</dl>
+<p>After the options, you can give configuration options as name=value
+pairs. These will be passed as configuration options to bobo and to
+any configuration handler you specify.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bobo</span> <span class="o">-</span><span class="n">f</span> <span class="n">fswiki</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">c</span> <span class="n">config</span> <span class="n">directory</span><span class="o">=</span><span class="n">docs</span>
+</pre></div>
+</div>
+<p>In this example, we run the application in the source file fswiki.py.
+We pass configuration data to the application’s <code class="docutils literal notranslate"><span class="pre">config</span></code> function.
+The options include the setting of <code class="docutils literal notranslate"><span class="pre">'doc'</span></code> for the directory option.</p>
+</section>
+<section id="advanced-resource-interfaces">
+<span id="routedetails"></span><h2>Advanced: resource interfaces<a class="headerlink" href="#advanced-resource-interfaces" title="Permalink to this heading">¶</a></h2>
+<p>Most applications will use the bobo-provided decorators to implement
+resources. These decorators create objects that provide certain
+methods and attributes.  Applications can implement these methods and
+attributes themselves to provide specialized behaviors.  For example,
+an application can implement bobo_response to provide a specialized
+object-look-up mechanism that doesn’t use routes.</p>
+<p>The most important method is <code class="docutils literal notranslate"><span class="pre">bobo_response</span></code>.  When bobo scans a
+module or class for resources, it looks for objects with this method.
+When handling a request, it calls this method on each of the objects
+found until a value is returned. See <a class="reference internal" href="#resourceinterface"><span class="std std-ref">IResource</span></a> for more
+details.</p>
+<p>The optional methods, <code class="docutils literal notranslate"><span class="pre">bobo_methods</span></code>, <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> and
+<code class="docutils literal notranslate"><span class="pre">bobo_response</span></code> are used when scanning a module or class. Resources
+found in a module or class are ordered within the module or class
+based on values of their <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> attribute.  (If a resource
+doesn’t have a <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> attribute, a value is used that is
+between those returned by <code class="docutils literal notranslate"><span class="pre">bobo.order()</span></code> and <code class="docutils literal notranslate"><span class="pre">bobo.late()</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">bobo_route</span></code> attribute is used to group resources within a
+module or class that have the same route.  Resources with the same
+route are treated as a single resource.  The route is matched and then
+a the first resource that accepts the request method is used.</p>
+<p>The optional <code class="xref py py-meth docutils literal notranslate"><span class="pre">bobo_reroute()</span></code> method is used by the bobo
+<a class="reference internal" href="#bobo.reroute" title="bobo.reroute"><code class="xref py py-func docutils literal notranslate"><span class="pre">bobo.reroute()</span></code></a> function to compute a new resource from an
+existing resource and a new route.</p>
+<section id="iresource">
+<span id="resourceinterface"></span><h3>IResource<a class="headerlink" href="#iresource" title="Permalink to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="boboserver.IResource">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">boboserver.</span></span><span class="sig-name descname"><span class="pre">IResource</span></span><a class="headerlink" href="#boboserver.IResource" title="Permalink to this definition">¶</a></dt>
+<dd><p>IResource is documented here to define an API that can be provided by
+application-defined resources.  Bobo doesn’t actually define an
+IResource object.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="boboserver.IResource.bobo_response">
+<span class="sig-name descname"><span class="pre">bobo_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.IResource.bobo_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an object to publish at the given path.</p>
+<p>If an object is found, call it and return the result.</p>
+<p>If no object can be found, return None.</p>
+<p>If a resource matches a path but doesn’t accept the request
+method, a 405, method not allowed, response should be returned.</p>
+<p>If the return value isn’t a response, it should be converted to
+a response.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="boboserver.IResource.bobo_methods">
+<span class="sig-name descname"><span class="pre">bobo_methods</span></span><a class="headerlink" href="#boboserver.IResource.bobo_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>This optional attribute specifies the HTTP request methods
+supported by objects found by the resource.  See <a class="reference internal" href="#routedetails"><span class="std std-ref">Advanced: resource interfaces</span></a>.
+If present, it muse be a sequence of method names, or None.  If
+it is None, then all methods are accepted.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="boboserver.IResource.bobo_order">
+<span class="sig-name descname"><span class="pre">bobo_order</span></span><a class="headerlink" href="#boboserver.IResource.bobo_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>This optional attribute defines the precedence order for a
+resource.  See <a class="reference internal" href="#routedetails"><span class="std std-ref">Advanced: resource interfaces</span></a>.  If present, it must be an
+integer. Resources with lower values for <code class="docutils literal notranslate"><span class="pre">bobo_order</span></code> are used
+before resources with higher values.  If the attribute isn’t
+present, a very high value is assumed.</p>
+<p>Typically, <code class="xref py py-func docutils literal notranslate"><span class="pre">order()</span></code> is called to get a value for bobo_order
+when a resource is defined.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="boboserver.IResource.bobo_route">
+<span class="sig-name descname"><span class="pre">bobo_route</span></span><a class="headerlink" href="#boboserver.IResource.bobo_route" title="Permalink to this definition">¶</a></dt>
+<dd><p>This optional attribute defines the <em>complete</em> route for a resource.  See
+<a class="reference internal" href="#routedetails"><span class="std std-ref">Advanced: resource interfaces</span></a>.  If present, it must be an string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="boboserver.IResource.bobo_reroute">
+<span class="sig-name descname"><span class="pre">bobo_reroute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#boboserver.IResource.bobo_reroute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new resource for the given route.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+<section id="advanced-subclassing-bobo-application">
+<h2>Advanced: subclassing bobo.Application<a class="headerlink" href="#advanced-subclassing-bobo-application" title="Permalink to this heading">¶</a></h2>
+<p>The bobo WSGI application, <a class="reference internal" href="#bobo.Application" title="bobo.Application"><code class="xref py py-class docutils literal notranslate"><span class="pre">bobo.Application</span></code></a> can be subclassed
+to handle alternate request implementations. This is to allow
+applications written for frameworks using request implementations other
+than Webob to be used with bobo.  A subclass should override the
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">build_response()</span></code> methods.</p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> method should:</p>
+<ul class="simple">
+<li><p>Create a request.</p></li>
+<li><p>Call <code class="docutils literal notranslate"><span class="pre">self.bobo_response(request,</span> <span class="pre">path,</span> <span class="pre">method)</span></code> to get a
+response.</p></li>
+<li><p>Return the result of calling the response with the <code class="docutils literal notranslate"><span class="pre">environ</span></code> and
+<code class="docutils literal notranslate"><span class="pre">start_response</span></code> arguments passed to <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>.</p></li>
+</ul>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> should look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+<span class="w">     </span><span class="sd">&quot;&quot;&quot;Handle a WSGI application request.</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+     <span class="n">request</span> <span class="o">=</span> <span class="o">...</span>
+
+     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bobo_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">path_info</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span>
+                               <span class="p">)(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The request should implement as much of the <a class="reference external" href="http://pythonpaste.org/webob/reference.html#id1">WebOb request API</a> as practical. It
+must implement the attributes used by bobo: <code class="docutils literal notranslate"><span class="pre">path_info</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">params</span></code>, and <code class="docutils literal notranslate"><span class="pre">POST</span></code>.</p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">build_response()</span></code> method is used to build a response when an
+application function returns a value that isn’t a response.  See the
+<a class="reference internal" href="#bobo.Application" title="bobo.Application"><code class="xref py py-class docutils literal notranslate"><span class="pre">bobo.Application</span></code></a> for more information on this method.</p>
+<p>New application implementations will also want to provide matching
+development servers.  The <a class="reference internal" href="#boboserver.server" title="boboserver.server"><code class="xref py py-func docutils literal notranslate"><span class="pre">boboserver.server()</span></code></a> entry point accepts an
+alternate application object, making implementation of alternate
+development servers trivial.</p>
+</section>
+</section>
+<section id="glossary">
+<h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this heading">¶</a></h1>
+<dl class="glossary">
+<dt id="term-order">order<a class="headerlink" href="#term-order" title="Permalink to this term">¶</a></dt><dd><p>The order in which a resource is searched relative to other
+resources.</p>
+</dd>
+<dt id="term-request">request<a class="headerlink" href="#term-request" title="Permalink to this term">¶</a></dt><dd><p>An object that contains information about a web request.  This
+is a <a class="reference external" href="http://pythonpaste.org/webob/#request">Webob request object</a>.
+See the Webob documentation to get details of its interface.</p>
+</dd>
+<dt id="term-resource">resource<a class="headerlink" href="#term-resource" title="Permalink to this term">¶</a></dt><dd><p>An object that has a bobo_response method. See <a class="reference internal" href="#routedetails"><span class="std std-ref">Advanced: resource interfaces</span></a>.</p>
+</dd>
+<dt id="term-response">response<a class="headerlink" href="#term-response" title="Permalink to this term">¶</a></dt><dd><p>An object that represents a web response.  This is usually a
+<a class="reference external" href="http://pythonpaste.org/webob/#response">Webob response</a>, but
+it may be any callable object that implements the <a class="reference external" href="http://www.python.org/dev/peps/pep-0333/#the-application-framework-side">WSGI
+application interface</a>.</p>
+<p>Applications will typically return strings that are converted
+to responses by bobo, or will construct and return Webob
+response objects.</p>
+</dd>
+<dt id="term-route">route<a class="headerlink" href="#term-route" title="Permalink to this term">¶</a></dt><dd><p>A URL pattern expressed as a path with placeholders, as in:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>/greeters/:name/:page?.html
+</pre></div>
+</div>
+<p>Routes are inspired by the <a class="reference external" href="http://api.rubyonrails.org/classes/ActionController/Routing.html">Ruby on Rails Routing</a>
+system.</p>
+<p>Placeholders are Python identifiers preceded by “/:”.  If a
+placeholder is followed by a question mark, it is optional.  A
+placeholder may be followed by an extension.  When a route
+matches a URL, the URL text corresponding to the placeholders
+is passed to the application as keyword parameters.</p>
+</dd>
+<dt id="term-route-data">route data<a class="headerlink" href="#term-route-data" title="Permalink to this term">¶</a></dt><dd><p>Values for placeholders resulting from matching a URL against a
+route.  For example, matching the URL: <code class="docutils literal notranslate"><span class="pre">http://localhost/a/b</span></code>
+against the route <code class="docutils literal notranslate"><span class="pre">/:x/:y/:z?</span></code> results in the route data
+<code class="docutils literal notranslate"><span class="pre">{'x':</span> <span class="pre">'a',</span> <span class="pre">'y':</span> <span class="pre">'b'}</span></code>.</p>
+</dd>
+<dt id="term-routes">routes<a class="headerlink" href="#term-routes" title="Permalink to this term">¶</a></dt><dd><p>See route.</p>
+</dd>
+</dl>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="contents.html">
+              <img class="logo" src="_static/bobo.png" alt="Logo"/>
+            </a></p>
+  <div>
+    <h3><a href="contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Reference</a><ul>
+<li><a class="reference internal" href="#module-bobo"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bobo</span></code> module documentation</a><ul>
+<li><a class="reference internal" href="#bobo.Application"><code class="docutils literal notranslate"><span class="pre">Application</span></code></a><ul>
+<li><a class="reference internal" href="#bobo.Application.build_response"><code class="docutils literal notranslate"><span class="pre">Application.build_response()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bobo.NotFound"><code class="docutils literal notranslate"><span class="pre">NotFound</span></code></a></li>
+<li><a class="reference internal" href="#bobo.early"><code class="docutils literal notranslate"><span class="pre">early()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.late"><code class="docutils literal notranslate"><span class="pre">late()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.order"><code class="docutils literal notranslate"><span class="pre">order()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.post"><code class="docutils literal notranslate"><span class="pre">post()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.preroute"><code class="docutils literal notranslate"><span class="pre">preroute()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.query"><code class="docutils literal notranslate"><span class="pre">query()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.redirect"><code class="docutils literal notranslate"><span class="pre">redirect()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.reroute"><code class="docutils literal notranslate"><span class="pre">reroute()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.resource"><code class="docutils literal notranslate"><span class="pre">resource()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.resources"><code class="docutils literal notranslate"><span class="pre">resources()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.scan_class"><code class="docutils literal notranslate"><span class="pre">scan_class()</span></code></a></li>
+<li><a class="reference internal" href="#bobo.subroute"><code class="docutils literal notranslate"><span class="pre">subroute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-boboserver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">boboserver</span></code> module documentation</a><ul>
+<li><a class="reference internal" href="#boboserver.Debug"><code class="docutils literal notranslate"><span class="pre">Debug</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.Reload"><code class="docutils literal notranslate"><span class="pre">Reload</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.server"><code class="docutils literal notranslate"><span class="pre">server()</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.static"><code class="docutils literal notranslate"><span class="pre">static()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-bobo-server">The bobo server</a></li>
+<li><a class="reference internal" href="#advanced-resource-interfaces">Advanced: resource interfaces</a><ul>
+<li><a class="reference internal" href="#iresource">IResource</a><ul>
+<li><a class="reference internal" href="#boboserver.IResource"><code class="docutils literal notranslate"><span class="pre">IResource</span></code></a><ul>
+<li><a class="reference internal" href="#boboserver.IResource.bobo_response"><code class="docutils literal notranslate"><span class="pre">IResource.bobo_response()</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.IResource.bobo_methods"><code class="docutils literal notranslate"><span class="pre">IResource.bobo_methods</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.IResource.bobo_order"><code class="docutils literal notranslate"><span class="pre">IResource.bobo_order</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.IResource.bobo_route"><code class="docutils literal notranslate"><span class="pre">IResource.bobo_route</span></code></a></li>
+<li><a class="reference internal" href="#boboserver.IResource.bobo_reroute"><code class="docutils literal notranslate"><span class="pre">IResource.bobo_reroute()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#advanced-subclassing-bobo-application">Advanced: subclassing bobo.Application</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#glossary">Glossary</a></li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="more.html"
+                          title="previous chapter">Additional topics</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="examples.html"
+                          title="next chapter">Examples</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="more.html" title="Additional topics"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="contents.html">bobo 2.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reference</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009-2014, Jim Fulton.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>
