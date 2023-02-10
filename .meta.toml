@@ -1,0 +1,44 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/zope-product
+[meta]
+template = "zope-product"
+commit-id = "20a50c67"
+
+[python]
+with-sphinx-doctests = false
+with-docs = true
+with-future-python = false
+with-pypy = false
+with-macos = false
+with-windows = false
+
+[tox]
+use-flake8 = true
+testenv-commands-pre = [
+    "{envbindir}/buildout -nc {toxinidir}/buildout.cfg buildout:directory={envdir} buildout:develop=\"{toxinidir} {toxinidir}/bobodoctestumentation\" install test",
+    ]
+
+[coverage]
+fail-under = 95
+
+[manifest]
+additional-rules = [
+    "exclude docs",
+    "prune docs",
+    "recursive-include bobodoctestumentation *.bat",
+    "recursive-include bobodoctestumentation *.html",
+    "recursive-include bobodoctestumentation *.ini",
+    "recursive-include bobodoctestumentation *.png",
+    "recursive-include bobodoctestumentation *.py",
+    "recursive-include bobodoctestumentation *.svg",
+    "recursive-include bobodoctestumentation *.test",
+    "recursive-include bobodoctestumentation *.txt",
+    "recursive-include bobodoctestumentation Makefile",
+    "include bobodoctestumentation/src/bobodoctestumentation/htpasswd",
+    ]
+
+[check-manifest]
+additional-ignores = [
+    "bobodoctestumentation/src/bobodoctestumentation/_build/html/*",
+    "bobodoctestumentation/src/bobodoctestumentation/_build/html/*/*",
+    ]

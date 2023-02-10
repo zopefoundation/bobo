@@ -1,5 +1,5 @@
 # Generated from:
-# https://github.com/zopefoundation/meta/tree/master/config/pure-python
+# https://github.com/zopefoundation/meta/tree/master/config/zope-product
 #
 # EditorConfig Configuration file, for more details see:
 # http://EditorConfig.org
@@ -28,7 +28,7 @@ max_line_length = off
 # 4 space indentation
 indent_size = 4
 
-[*.{yml,zpt,pt,dtml}]
+[*.{yml,zpt,pt,dtml,zcml}]
 # 2 space indentation
 indent_size = 2
 

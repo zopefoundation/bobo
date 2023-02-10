@@ -139,7 +139,7 @@ Let's publish a module with an error:
     NameError: ... 'y' is not defined
     post_mortem:
     ...
-        return self.app(environ, start_response)
+        return self.app(environ, start_response)...
     raised ... 'y' is not defined
 
     >>> time.sleep(1.1)
